@@ -127,3 +127,4 @@
 - [x] Authentication barrier returns HTTP 401 without leakage fulfilling `NFR-02`.
 - [x] Automated unit and integration test suite executing and passing.
 - [x] Feature implemented on branch `feat/F-01-auth` and reviewed by peer (Student B) via PR into `sprint-1-staging`.
+

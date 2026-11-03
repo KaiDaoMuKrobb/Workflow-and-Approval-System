@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { comparePassword, signToken } from '@/lib/auth';
+import { comparePassword, signToken, TokenPayload } from '@/lib/auth';
 import { jsonSuccess, jsonError } from '@/lib/api-response';
 
 export async function POST(req: NextRequest) {
@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
       return jsonError('Invalid email or password', 'INVALID_CREDENTIALS', 400);
     }
 
-    const tokenPayload = {
+    const tokenPayload: TokenPayload = {
+      id: user.id,
       userId: user.id,
       email: user.email,
       name: user.name,
@@ -37,7 +38,14 @@ export async function POST(req: NextRequest) {
 
     const response = jsonSuccess(
       {
-        user: tokenPayload,
+        user: {
+          id: user.id,
+          userId: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          department: user.department,
+        },
       },
       200
     );

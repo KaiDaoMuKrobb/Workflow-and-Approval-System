@@ -9,5 +9,17 @@ export async function GET(req: NextRequest) {
     return jsonError('Authentication required', 'UNAUTHENTICATED', 401);
   }
 
-  return jsonSuccess({ user: sessionUser }, 200);
+  return jsonSuccess(
+    {
+      user: {
+        id: sessionUser.id || sessionUser.userId,
+        userId: sessionUser.userId || sessionUser.id,
+        email: sessionUser.email,
+        name: sessionUser.name,
+        role: sessionUser.role,
+        department: sessionUser.department,
+      },
+    },
+    200
+  );
 }

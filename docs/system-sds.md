@@ -198,12 +198,27 @@ Every route handler executes an invariant 4-tier evaluation pipeline before acce
 4. Domain State Machine Guard ──(Illegal state transition)───> 400 INVALID_TRANSITION
                               ──(Edit submitted request)────> 400 IMMUTABLE_AFTER_SUBMIT
                               ──(Invalid item/zero amount)───> 400 VALIDATION_ERROR
+                              ──(Invalid login credentials)──> 400 INVALID_CREDENTIALS
           │
           ▼
-[Execute Domain Logic & Commit Transaction]
+[Execute Domain Logic & Commit Transaction] (Unhandled Server Exceptions ──> 500 INTERNAL_ERROR)
 ```
 
-### 4.3 Role & Permission Matrix
+### 4.3 Shared Error Code Vocabulary
+
+| `code` | When Used | HTTP | Linked Rule / Requirement |
+| :--- | :--- | :---: | :--- |
+| `UNAUTHENTICATED` | Missing or expired session cookie | 401 | `NFR-02` |
+| `NOT_FOUND` | Resource not found or requester has no permission to know it exists | 404 | `BR-05`, `DEC-03` |
+| `FORBIDDEN` | Authenticated but unauthorized to perform this action | 403 | `BR-05` |
+| `SELF_APPROVAL` | Reviewer attempting to decide on their own submitted request | 403 | `BR-01`, `DEC-02` |
+| `INVALID_TRANSITION` | Disallowed state machine transition attempt | 400 | `BR-02` |
+| `IMMUTABLE_AFTER_SUBMIT` | Attempting to modify a request after submission | 400 | `BR-03` |
+| `VALIDATION_ERROR` | Missing required fields, zero/negative line item amount | 400 | `BR-04` |
+| `INVALID_CREDENTIALS` | Incorrect email or password during login | 400 | `FR-01`, `AC-02` |
+| `INTERNAL_ERROR` | Unhandled server exception or database failure | 500 | Robustness |
+
+### 4.4 Role & Permission Matrix
 
 | Endpoint | Method | Public | Requester (Owner) | Requester (Other) | Assigned Reviewer | Unrelated Reviewer |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |

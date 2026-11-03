@@ -10,10 +10,11 @@ import { Role } from '@prisma/client';
 describe('Feature F-01: Authentication API & NFR-02 Verification', () => {
   const testEmail = 'test.auth@test.com';
   const testPassword = 'Password123!';
+  let createdUserId: string;
 
   beforeAll(async () => {
     const passwordHash = await bcrypt.hash(testPassword, 10);
-    await prisma.user.upsert({
+    const user = await prisma.user.upsert({
       where: { email: testEmail },
       update: { passwordHash },
       create: {
@@ -24,6 +25,7 @@ describe('Feature F-01: Authentication API & NFR-02 Verification', () => {
         passwordHash,
       },
     });
+    createdUserId = user.id;
   });
 
   afterAll(async () => {
@@ -33,7 +35,7 @@ describe('Feature F-01: Authentication API & NFR-02 Verification', () => {
     await prisma.$disconnect();
   });
 
-  it('TEST-01 / AC-01: valid credentials return 200 OK and set session cookie', async () => {
+  it('TEST-01 / AC-01: valid credentials return 200 OK, user.id, and set session cookie', async () => {
     const req = new NextRequest('http://localhost:3000/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -46,6 +48,8 @@ describe('Feature F-01: Authentication API & NFR-02 Verification', () => {
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.data.user.email).toBe(testEmail);
+    expect(body.data.user.id).toBe(createdUserId);
+    expect(body.data.user.userId).toBe(createdUserId);
 
     const setCookie = res.headers.get('set-cookie');
     expect(setCookie).toBeTruthy();
