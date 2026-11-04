@@ -16,6 +16,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    exclude: ['**/node_modules/**', '**/dist/**', '**/tests/e2e/**'],
     env: {
       JWT_SECRET: process.env.JWT_SECRET || 'super-secret-jwt-key-for-development-cpe334-expenseflow',
     },

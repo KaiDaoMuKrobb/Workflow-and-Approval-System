@@ -215,10 +215,10 @@
 
 ## 5. Product Definition of Done (DoD)
 
-- [ ] Feature SDS, API contracts, ACs, and STS committed before implementation.
-- [ ] Automated integration test suite (`tests/api/request-crud.test.ts`) covering `TEST-10`..`TEST-19` executing and passing.
-- [ ] Tests run and failed first (Red) before implementation, terminal output captured.
-- [ ] Server-side calculation with `Decimal(12, 2)` verified preventing floating-point rounding errors (`DEC-04`).
-- [ ] Request number format `EXP-{YYYY}-{NNNN}` generated sequentially with unique constraint (`BR-06`).
-- [ ] Playwright E2E journey `E2E-01` implemented in `tests/e2e/requester-journey.spec.ts` passing against local dev server.
-- [ ] PR opened into `sprint-1-staging`, reviewed by teammate (@siripitch-c).
+- [x] Feature SDS, API contracts, ACs, and STS committed before implementation.
+- [x] Automated integration test suite (`tests/api/request-crud.test.ts`) covering `TEST-10`..`TEST-19` executing and passing.
+- [x] Tests run and failed first (Red) before implementation, terminal output captured.
+- [x] Server-side calculation with `Decimal(12, 2)` verified preventing floating-point rounding errors (`DEC-04`).
+- [x] Request number format `EXP-{YYYY}-{NNNN}` generated sequentially with unique constraint (`BR-06`).
+- [x] Playwright E2E journey `E2E-01` implemented in `tests/e2e/requester-journey.spec.ts` passing against local dev server.
+- [x] Feature implemented on branch `feat/F-02-request-crud` and ready for review via PR into `sprint-1-staging`.
