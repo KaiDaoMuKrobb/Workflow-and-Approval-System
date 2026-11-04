@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUserFromRequest } from '@/lib/auth';
 import { jsonSuccess, jsonError } from '@/lib/api-response';
+import { Role } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,9 @@ export async function GET(req: NextRequest) {
     }
 
     const reviewers = await prisma.user.findMany({
+      where: {
+        role: Role.REVIEWER,
+      },
       select: {
         id: true,
         name: true,

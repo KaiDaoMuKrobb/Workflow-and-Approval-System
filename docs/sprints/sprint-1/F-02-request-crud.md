@@ -188,18 +188,36 @@
   *When* `POST /api/requests/:id/submit` specifies their own `id` as `assignedReviewerId`  
   *Then* submission succeeds with HTTP 200 (rejection is deferred to review boundary `BR-01` in F-04).
 
+- **`AC-18b` (Assigned Reviewer Role Enforcement - SR-05):**  
+  *Given* a draft request ready for submission  
+  *When* `POST /api/requests/:id/submit` specifies an `assignedReviewerId` of a user who does not hold `Role.REVIEWER` (e.g. a `REQUESTER`)  
+  *Then* server rejects with HTTP 400 and error code `VALIDATION_ERROR` (`Assigned reviewer must hold REVIEWER role`).
+
+- **`AC-18c` (Reviewers List Constrained to Reviewer Accounts):**  
+  *Given* an authenticated user querying reviewer candidates  
+  *When* `GET /api/reviewers` is invoked  
+  *Then* response contains only users holding `role: REVIEWER` (e.g. Carol, David) and excludes non-reviewer accounts (e.g. Alice, Bob).
+
 - **`AC-19` (Requester Personal Requests Query):**  
   *Given* an authenticated user with requests in the system  
   *When* `GET /api/requests` is queried  
   *Then* response contains only requests created by the caller (`requesterId == caller.id`).
 
+- **`AC-19b` (Reviewer Retains Visibility of Decided Requests):**  
+  *Given* a reviewer with assigned requests that have been decided (`APPROVED` or `REJECTED`)  
+  *When* `GET /api/requests` is queried by the reviewer  
+  *Then* decided requests remain in the result list (not filtered out by status).
+
 ---
 
 ## 4. Software Test Specification (STS)
 
+> **Prerequisites:** The test suites expect standard seed accounts from `prisma/seed.ts` (`npx prisma db seed`).
+
 | Test ID | Linked AC | Level | Preconditions / Input | Execution Action | Expected Result |
 | :--- | :---: | :---: | :--- | :--- | :--- |
 | **`TEST-10`** | `AC-10` | Integration | Authenticated user `alice.req@test.com` | `POST /api/requests` with 2 items (850.50, 420.00) | HTTP 201, `EXP-{YYYY}-NNNN`, `status: 'DRAFT'`, `totalAmount: '1270.50'` |
+| **`TEST-10b`** | `BR-06` | Integration | Multiple concurrent draft requests | `Promise.all` creating 3 drafts simultaneously | HTTP 201 on all, unique sequential EXP numbers, zero P2002 collision |
 | **`TEST-11`** | `AC-11` | Integration | Authenticated user | `POST /api/requests` with item amount `-50.00` | HTTP 400, `VALIDATION_ERROR`, zero records created |
 | **`TEST-12`** | `AC-12` | Integration | Authenticated user | `POST /api/requests` with items sum 500, spoofed total 9999 | HTTP 201, `totalAmount: '500.00'` (client total discarded) |
 | **`TEST-13`** | `AC-13` | Integration | Draft owned by Alice | `PUT /api/requests/:id` with new items | HTTP 200, items updated, total recalculated |
@@ -208,7 +226,10 @@
 | **`TEST-16`** | `AC-16` | Integration | Draft with items, valid Carol reviewer ID | `POST /api/requests/:id/submit` | HTTP 200, status `SUBMITTED`, `ApprovalHistory` logged |
 | **`TEST-17`** | `AC-17` | Integration | Draft with items | `POST /api/requests/:id/submit` without reviewer ID | HTTP 400, `VALIDATION_ERROR` |
 | **`TEST-18`** | `AC-18` | Integration | Reviewer David submitting request | `POST /api/requests/:id/submit` with `assignedReviewerId: david.id` | HTTP 200, status `SUBMITTED`, reviewer set to self (`DEC-02`) |
+| **`TEST-18b`** | `AC-18b` | Integration | Draft with items, Bob's ID (`Role.REQUESTER`) | `POST /api/requests/:id/submit` with Bob's ID | HTTP 400, `VALIDATION_ERROR` (`Assigned reviewer must hold REVIEWER role`) |
+| **`TEST-18c`** | `AC-18c` | Integration | Authenticated requester | `GET /api/reviewers` | HTTP 200, returns Carol & David, excludes Alice & Bob |
 | **`TEST-19`** | `AC-19` | Integration | Alice has 2 requests, Bob has 1 request | `GET /api/requests` as Alice | HTTP 200, returns exactly Alice's 2 requests |
+| **`TEST-19b`** | `AC-19b` | Integration | Reviewer David with decided request (`APPROVED`) | `GET /api/requests` as David | HTTP 200, includes the approved request (does not vanish) |
 | **`TEST-E2E-01`** | `E2E-01` | E2E (UI) | Seeded Alice and Carol | Playwright: Login Alice $\rightarrow$ Create Draft $\rightarrow$ Add 2 items $\rightarrow$ Submit to Carol $\rightarrow$ Assert `SUBMITTED` | Browser test passes cleanly |
 
 ---

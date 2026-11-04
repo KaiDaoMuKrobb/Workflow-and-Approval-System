@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUserFromRequest } from '@/lib/auth';
 import { jsonSuccess, jsonError } from '@/lib/api-response';
-import { RequestStatus } from '@prisma/client';
+import { RequestStatus, Role } from '@prisma/client';
 
 export async function POST(
   req: NextRequest,
@@ -51,13 +51,13 @@ export async function POST(
       return jsonError('Assigned reviewer is required for submission', 'VALIDATION_ERROR', 400);
     }
 
-    // Verify reviewer exists
+    // Verify reviewer exists and holds REVIEWER role
     const reviewer = await prisma.user.findUnique({
       where: { id: assignedReviewerId.trim() },
     });
 
-    if (!reviewer) {
-      return jsonError('Assigned reviewer user does not exist', 'VALIDATION_ERROR', 400);
+    if (!reviewer || reviewer.role !== Role.REVIEWER) {
+      return jsonError('Assigned reviewer must hold REVIEWER role', 'VALIDATION_ERROR', 400);
     }
 
     // DEC-02: Self-assignment (assignedReviewerId == requesterId) is permitted at submit time.
@@ -106,3 +106,4 @@ export async function POST(
     return jsonError('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
+

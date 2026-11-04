@@ -51,3 +51,4 @@ test.describe('E2E-01: Requester Expense Claim Creation & Submission Journey', (
     await expect(page.locator('text=฿1270.50').first()).toBeVisible();
   });
 });
+

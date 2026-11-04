@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
       whereClause = {
         OR: [
           { requesterId: sessionUser.id },
-          { assignedReviewerId: sessionUser.id, status: RequestStatus.SUBMITTED },
+          { assignedReviewerId: sessionUser.id },
         ],
       };
     }
@@ -110,27 +110,42 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Create draft request inside a database transaction
-    const newRequest = await prisma.$transaction(async (tx) => {
-      const requestNumber = await generateNextRequestNumber(tx);
+    // Create draft request inside a database transaction with concurrency retry (BR-06)
+    let newRequest;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        newRequest = await prisma.$transaction(async (tx) => {
+          const requestNumber = await generateNextRequestNumber(tx);
 
-      return tx.expenseRequest.create({
-        data: {
-          requestNumber,
-          title: title.trim(),
-          description: String(description).trim(),
-          totalAmount: calculatedTotal,
-          status: RequestStatus.DRAFT,
-          requesterId: sessionUser.id,
-          items: {
-            create: validItems,
-          },
-        },
-        include: {
-          items: true,
-        },
-      });
-    });
+          return tx.expenseRequest.create({
+            data: {
+              requestNumber,
+              title: title.trim(),
+              description: String(description).trim(),
+              totalAmount: calculatedTotal,
+              status: RequestStatus.DRAFT,
+              requesterId: sessionUser.id,
+              items: {
+                create: validItems,
+              },
+            },
+            include: {
+              items: true,
+            },
+          });
+        });
+        break;
+      } catch (err: any) {
+        if (err?.code === 'P2002' && attempt < 3) {
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (!newRequest) {
+      return jsonError('Failed to allocate unique request number', 'INTERNAL_ERROR', 500);
+    }
 
     const serialized = {
       ...newRequest,

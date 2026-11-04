@@ -7,6 +7,11 @@ export async function generateNextRequestNumber(
   const currentYear = new Date().getFullYear();
   const prefix = `EXP-${currentYear}-`;
 
+  // Acquire transaction-scoped advisory lock on prefix hash to prevent concurrent sequence collisions (BR-06)
+  if ('$executeRaw' in tx) {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${prefix}))`;
+  }
+
   const latest = await tx.expenseRequest.findFirst({
     where: {
       requestNumber: {
@@ -35,3 +40,4 @@ export async function generateNextRequestNumber(
   const paddedSequence = String(nextSequence).padStart(4, '0');
   return `${prefix}${paddedSequence}`;
 }
+
