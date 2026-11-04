@@ -51,6 +51,13 @@ describe('Feature F-01: Authentication API & NFR-02 Verification', () => {
     expect(body.data.user.email).toBe(testEmail);
     expect(body.data.user.id).toBe(createdUserId);
 
+    // NFR-01: Verify raw database record stores bcrypt hash ($2a$ or $2b$), never plaintext
+    const persistedUser = await prisma.user.findUnique({
+      where: { id: createdUserId },
+    });
+    expect(persistedUser?.passwordHash).toMatch(/^\$2[ab]\$/);
+    expect(persistedUser?.passwordHash).not.toBe(testPassword);
+
     const setCookie = res.headers.get('set-cookie');
     expect(setCookie).toBeTruthy();
     expect(setCookie).toContain('expense_session=');
