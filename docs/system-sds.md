@@ -240,7 +240,7 @@ Every route handler executes an invariant 4-tier evaluation pipeline before acce
    - User passwords are encrypted using `bcryptjs` with 10 salt rounds before storage.
    - Plaintext passwords never enter logs, database fields, or API responses (`NFR-01`).
 2. **Session Lifecycle:**
-   - Successful authentication issues a cryptographically signed JWT containing `userId`, `email`, `role`, and `department`.
+   - Successful authentication issues a cryptographically signed JWT containing `id`, `email`, `role`, and `department`.
    - The token is transmitted exclusively via an `HttpOnly`, `SameSite=Lax`, `Path=/` cookie (`expense_session`), expiring in 24 hours (86,400s).
 3. **Logout Workflow:**
    - `POST /api/auth/logout` sets cookie `Max-Age=0`, ensuring immediate client-side token discard.
