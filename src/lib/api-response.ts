@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ApiResponse } from '@/types';
+import { ApiResponse, ErrorCode } from '@/types';
 
 export function jsonSuccess<T>(data: T, status: number = 200) {
   const body: ApiResponse<T> = {
@@ -9,7 +9,7 @@ export function jsonSuccess<T>(data: T, status: number = 200) {
   return NextResponse.json(body, { status });
 }
 
-export function jsonError(message: string, code: string, status: number) {
+export function jsonError(message: string, code: ErrorCode, status: number) {
   const body: ApiResponse = {
     success: false,
     error: {

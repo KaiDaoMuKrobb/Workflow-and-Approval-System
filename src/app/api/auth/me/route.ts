@@ -12,8 +12,7 @@ export async function GET(req: NextRequest) {
   return jsonSuccess(
     {
       user: {
-        id: sessionUser.id || sessionUser.userId,
-        userId: sessionUser.userId || sessionUser.id,
+        id: sessionUser.id,
         email: sessionUser.email,
         name: sessionUser.name,
         role: sessionUser.role,

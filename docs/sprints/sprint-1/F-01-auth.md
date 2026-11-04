@@ -1,8 +1,8 @@
 # Feature Engineering Contract: F-01 User Authentication & Session Management
 **Feature ID:** `F-01`  
 **Sprint:** Sprint 1  
-**Owner:** Student A  
-**Reviewer:** Student B  
+**Owner:** KaiDaoMuKrobb  
+**Reviewer:** siripitch-c  
 **Status:** Specified & Ready for Review  
 
 ---
@@ -68,6 +68,16 @@
   ```json
   { "success": true, "data": { "message": "Logged out successfully" } }
   ```
+- **Error Response (401 Unauthorized):**
+  ```json
+  {
+    "success": false,
+    "error": {
+      "message": "Authentication required",
+      "code": "UNAUTHENTICATED"
+    }
+  }
+  ```
 
 #### `GET /api/auth/me`
 - **Access:** Authenticated
@@ -100,7 +110,7 @@
 - **`AC-03` (Session Logout):**  
   *Given* an authenticated user with an active session cookie  
   *When* `POST /api/auth/logout` is invoked  
-  *Then* server responds with HTTP 200 and invalidates the session cookie (`Max-Age=0`).
+  *Then* server responds with HTTP 200 and invalidates the session cookie (`Max-Age=0`). Calling without an active session cookie returns HTTP 401 with code `UNAUTHENTICATED` per `NFR-02`.
 
 - **`AC-04` (Unauthenticated Access Barrier - NFR-02):**  
   *Given* an unauthenticated HTTP request without an active session cookie  
@@ -126,5 +136,5 @@
 - [x] Password hashing verified via `bcryptjs` (salt $\ge 10$) fulfilling `NFR-01`.
 - [x] Authentication barrier returns HTTP 401 without leakage fulfilling `NFR-02`.
 - [x] Automated unit and integration test suite executing and passing.
-- [x] Feature implemented on branch `feat/F-01-auth` and reviewed by peer (Student B) via PR into `sprint-1-staging`.
+- [x] Feature implemented on branch `feat/F-01-auth` and reviewed by peer (@siripitch-c) via PR into `sprint-1-staging`.
 

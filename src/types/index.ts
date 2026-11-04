@@ -16,13 +16,12 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: {
     message: string;
-    code: ErrorCode | string;
+    code: ErrorCode;
   };
 }
 
 export interface SessionUser {
   id: string;
-  userId: string;
   email: string;
   name: string;
   role: Role;

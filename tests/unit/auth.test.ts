@@ -17,10 +17,9 @@ describe('Auth Utility & NFR-01 (Password Security)', () => {
     expect(isWrongMatch).toBe(false);
   });
 
-  it('signToken and verifyToken correctly encode and decode user claims in JWT (both id and userId)', () => {
+  it('signToken and verifyToken correctly encode and decode user claims in JWT', () => {
     const payload = {
       id: 'test-user-uuid',
-      userId: 'test-user-uuid',
       email: 'alice.req@test.com',
       name: 'Alice Requester',
       role: Role.REQUESTER,
@@ -33,7 +32,6 @@ describe('Auth Utility & NFR-01 (Password Security)', () => {
     const decoded = verifyToken(token);
     expect(decoded).not.toBeNull();
     expect(decoded?.id).toBe(payload.id);
-    expect(decoded?.userId).toBe(payload.userId);
     expect(decoded?.email).toBe(payload.email);
     expect(decoded?.role).toBe(Role.REQUESTER);
   });
