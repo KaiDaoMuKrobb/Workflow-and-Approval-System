@@ -43,7 +43,7 @@ answers `404`, not `403`, as `DEC-03` requires.
 
 ```
 Reviewer signs in
-  -> /dashboard          table of SUBMITTED requests assigned to them
+  -> /reviewer/dashboard   table of requests assigned to them
   -> clicks a row
   -> /requests/[id]      header, line items, approval history
 ```
@@ -151,7 +151,7 @@ No query parameters in Sprint 1. Filtering and paging belong to Sprint 2.
 
 | Page | Route | Content |
 | :--- | :--- | :--- |
-| Reviewer Dashboard | `/dashboard` | Table: request number · title · requester · total · status · submitted date. A row opens the detail page |
+| Reviewer Dashboard | `/reviewer/dashboard` | Table: request number · title · requester · total · status · submitted date. A row opens the detail page |
 | Request Detail | `/requests/[id]` | Header fields · line item table · total · Approval History oldest first |
 
 > **Decision — what the dashboard shows.** `GET /api/requests` returns everything the caller may see:
@@ -161,12 +161,19 @@ No query parameters in Sprint 1. Filtering and paging belong to Sprint 2.
 > reviewer from meeting an Approve control on their own work in `F-04`; `BR-01` is still enforced in the
 > route handler regardless, because hiding a control is never the enforcement (`SR-05`).
 
-States both pages must handle:
+States each page must handle. A state marked — cannot arise on that page.
 
-- **Loading** — a skeleton or an explicit loading message
-- **Empty** — "No requests are waiting for your review", never a bare empty table
-- **Failure** — a safe message with a retry control, no stack trace
-- **Not found** (from a `404`) — "Request not found" with a link back to the dashboard
+| State | Reviewer Dashboard | Request Detail |
+| :--- | :--- | :--- |
+| **Loading** | an explicit loading message | an explicit loading message |
+| **Empty** | "No requests are waiting for your review", never a bare empty table | — |
+| **Failure** | a safe message with a retry control, no stack trace | a safe message with a retry control, no stack trace |
+| **Not found** (from a `404`) | — | "Request not found" with a link back to the dashboard |
+
+> **Known limitation.** The queue table scrolls horizontally below roughly 700 px, where the title column
+> wraps to one word per line and only the first three columns are visible without scrolling. It remains
+> usable and no data is lost. Responsive behaviour at three widths belongs to `F-10` in Sprint 3, so this is
+> recorded here and disclosed in the Deliverable 1 report rather than fixed inside this feature.
 
 ---
 
@@ -184,7 +191,7 @@ States both pages must handle:
 | **`AC-25`** | **Given** Alice raised request X<br>**When** she calls `GET /api/requests/X`<br>**Then** the response is `200` |
 | **`AC-26`** | **Given** David is a reviewer but is **not** assigned request X<br>**When** he calls `GET /api/requests/X`<br>**Then** the response is `404` `NOT_FOUND`, not `403` |
 | **`AC-27`** | **Given** an id that exists nowhere in the database<br>**When** `GET /api/requests/:id` is called<br>**Then** the response is `404` `NOT_FOUND`, **byte for byte identical to `AC-26`** |
-| **`AC-28`** | **Given** Carol has no assigned requests<br>**When** she opens `/dashboard`<br>**Then** she sees the empty-state message, not an empty table and not an error |
+| **`AC-28`** | **Given** Carol has no assigned requests<br>**When** she opens `/reviewer/dashboard`<br>**Then** she sees the empty-state message, not an empty table and not an error |
 | **`AC-29`** | **Given** the seeded database<br>**When** `GET /api/requests` is called after one warm-up call<br>**Then** it answers within 500 ms |
 
 > **Membership, not length.** Vitest runs test files in parallel and `F-02`'s `TEST-16` also assigns a
@@ -202,22 +209,26 @@ States both pages must handle:
 | Test ID | AC | Level | Precondition / input | Expected result |
 | :--- | :--- | :--- | :--- | :--- |
 | `TEST-20` | `AC-20` | API | Sign in as Carol · seed holds Alice's request assigned to Carol, status `SUBMITTED` | `200` · the array contains that `requestNumber` |
+| `TEST-20b` | `AC-20` | API | Sign in as Carol · read the fixture row from the list | `totalAmount` and every `items[].amount` are strings, and `1500.00` keeps its trailing zeros (`DEC-04`, `SR-04`) |
 | `TEST-21` | `AC-21` | API | Sign in as Carol · seed holds Bob's request assigned to David | `200` · the array does not contain Bob's request |
 | `TEST-22` | `AC-22` | API | Sign in as Carol · one request she raised, one assigned to her | `200` · **both fixture request numbers are present** |
 | `TEST-23` | `AC-23` | API | Send no cookie | `401` · `code = UNAUTHENTICATED` · body has no `requests` key |
+| `TEST-23b` | `AC-23` | API | Send no cookie to the **detail** endpoint | `401` · `code = UNAUTHENTICATED` · no request data in the body |
 | `TEST-24` | `AC-24` | API | Sign in as Carol · GET a request assigned to her | `200` · `items` length ≥ 1 · `history` length ≥ 1 |
 | `TEST-25` | `AC-25` | API | Sign in as Alice · GET her own request | `200` |
 | `TEST-26` | `AC-26` | API | Sign in as David · GET a request assigned to Carol | `404` · `code = NOT_FOUND` |
 | `TEST-27` | `AC-27` | API | Sign in as David · GET a random non-existent id | `404` · `code = NOT_FOUND` · body equal to the one from `TEST-26` |
 | `TEST-28` | `AC-28` | UI | Render the dashboard with an empty result array | The empty-state message is present · no table row elements |
+| `TEST-28b` | `AC-28` | UI | Render the queue with one request | The row is present and the empty-state message is **not** |
+| `TEST-28c` | `AC-28` | UI | Render the queue with `totalAmount` of `1270.50` | The cell reads `1270.50`, so the cents column survives rendering (`DEC-04`) |
 | `TEST-29` | `AC-29` | API | Discard one call, then time the second | Elapsed time under 500 ms |
 
 Test files
 
 ```
-tests/api/requests-list.test.ts      TEST-20 .. TEST-23, TEST-29
-tests/api/requests-detail.test.ts    TEST-24 .. TEST-27
-tests/unit/dashboard-empty.test.tsx  TEST-28
+tests/api/requests-list.test.ts      TEST-20, TEST-20b, TEST-21, TEST-22, TEST-23, TEST-29
+tests/api/requests-detail.test.ts    TEST-24 .. TEST-27, TEST-23b
+tests/unit/dashboard-empty.test.tsx  TEST-28, TEST-28b, TEST-28c
 ```
 
 ---
@@ -235,7 +246,21 @@ tests/unit/dashboard-empty.test.tsx  TEST-28
 
 ---
 
-## 7. Coordination needed with KaiDaoMuKrobb before implementation
+## 7. Version history
+
+Deliverable 1 Part E requires revisions to remain visible and justified, so every change to this contract
+after it was first written is recorded here rather than left to the Git log alone.
+
+| Version | Date | Change | Reason |
+| :--- | :--- | :--- | :--- |
+| 1.0 | 4 Nov 2026 | Contract written: feature SDS, visibility rules, API and UI specifications, `AC-20`..`AC-29`, STS and Definition of Done | Written before implementation, as Part E requires |
+| 1.1 | 5 Nov 2026 | Aligned with the code `F-02` shipped in PR #8: the detail response is nested under `data.request`; a note records that both read handlers already exist and that `F-03` extends them in place; the index question in §3.1 is closed; `TEST-22` asserts fixture membership instead of list length; the dashboard scope decision and the payload-weight note were added | `F-02` merged before this feature began and its tests already assert those shapes, so the contract follows the shipped API rather than renaming it. `F-01` had shipped the indexes in `20261103150948_add_performance_indexes`. The length assertion would have depended on which test files happened to run in parallel, since `F-02`'s `TEST-16` also assigns a request to Carol |
+| 1.2 | 5 Nov 2026 | Dashboard route changed from `/dashboard` to `/reviewer/dashboard`, in §2.3, §3.3 and `AC-28` | `F-02` shipped `src/app/login/page.tsx` sending a reviewer to `/reviewer/dashboard` after sign-in, a route no feature had built, so a reviewer met a 404 on login. Found by opening the running page, not by any test. Taking the path the merged code already expects fixes the dead link without editing another feature's file |
+| 1.3 | 5 Nov 2026 | `TEST-20b`, `TEST-23b`, `TEST-28b` and `TEST-28c` added to the STS; the UI state list became a per-page table; the narrow-width table limitation recorded in §3.3 | The four tests were written alongside the planned ones but existed only in code, so the specification did not describe everything the suite verifies; three of them are success cases for rules whose refusal was already covered. The state list claimed both pages handle all four states, which is not true and not possible: a queue has no not-found state and a single request has no empty state |
+
+---
+
+## 8. Coordination needed with KaiDaoMuKrobb before implementation
 
 1. ~~`GET /api/requests/:id` belongs to F-03 but `E2E-01` depends on it.~~ **Settled.** `F-02` implemented
    both read handlers in PR #8 so it was never blocked. `F-03` extends them in place and adds the reviewer
