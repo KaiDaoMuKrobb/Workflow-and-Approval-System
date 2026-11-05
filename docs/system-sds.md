@@ -3,7 +3,8 @@
 **Deliverable:** CPE 334 Project Deliverable 1 (Part C: 15 Points)  
 **Theme:** Theme 5 — Workflow and Approval System  
 **Document Status:** Approved Baseline (Sprint 1)  
-**Author / Maintainer:** Student A (Pair: Student A & Student B)  
+**Author / Maintainer:** KaiDaoMuKrobb  
+**Reviewer:** siripitch-c  
 
 ---
 
