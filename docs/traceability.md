@@ -38,7 +38,7 @@ reserved in the team agreement §9.2 and never change once allocated.
 | `FR-01` Sign in and sign out | `F-01` | 1 | `AC-01` .. `AC-04` | `TEST-01` .. `TEST-04` | `verified` — merged in PR #6 |
 | `FR-02` Create a request with line items | `F-02` | 1 | `AC-10` .. `AC-13` | `TEST-10` .. `TEST-19` | `pass` — 35/35 on `npm test` |
 | `FR-03` Submit to a named reviewer | `F-02` | 1 | `AC-16` .. `AC-18`, `AC-18b`, `AC-18c` | within `TEST-10` .. `TEST-19` | `pass` — 35/35 on `npm test` |
-| `FR-04` Reviewer sees assigned requests | `F-03` | 1 | `AC-20`, `AC-21`, `AC-22`, `AC-24`, `AC-28` | `TEST-20`, `TEST-21`, `TEST-22`, `TEST-24`, `TEST-28` | `specified` |
+| `FR-04` Reviewer sees assigned requests | `F-03` | 1 | `AC-20`, `AC-21`, `AC-22`, `AC-24`, `AC-28` | `TEST-20`, `TEST-21`, `TEST-22`, `TEST-24`, `TEST-28` | `pass` — 35/35 on `npm test` |
 | `FR-05` Approve or reject with a reason | `F-04` | 1 | `AC-30`, `AC-36` | `TEST-30`, `TEST-36`, `TEST-E2E-02` | `specified` |
 
 ### Business Rules
@@ -49,7 +49,7 @@ reserved in the team agreement §9.2 and never change once allocated.
 | `BR-02` Valid state transitions only | `F-04` | 1 | **`AC-32`** | `TEST-32` | `specified` |
 | `BR-03` Immutable after submission | `F-02` | 1 | `AC-15` | `TEST-15` | `pass` — 35/35 on `npm test` |
 | `BR-04` Total and line item validation | `F-02` | 1 | `AC-11`, `AC-12` | `TEST-11`, `TEST-12` | `pass` — 35/35 on `npm test` |
-| `BR-05` Access isolation — read | `F-03` | 1 | `AC-21`, `AC-26`, `AC-27`, **`AC-34`** | `TEST-21`, `TEST-26`, `TEST-27`, `TEST-34` | `specified` |
+| `BR-05` Access isolation — read | `F-03` | 1 | `AC-21`, `AC-26`, `AC-27`, **`AC-34`** | `TEST-21`, `TEST-26`, `TEST-27`, `TEST-34` | `pass` — 35/35 on `npm test` for `TEST-21`, `TEST-26`, `TEST-27` · `TEST-34` `specified`, lands with `F-04` |
 | `BR-05` Access isolation — decide | `F-04` | 1 | **`AC-33`** | `TEST-33` | `specified` |
 | `BR-06` Request number generation | `F-02` | 1 | `AC-10` | `TEST-10`, `TEST-10b` | `pass` — 35/35 on `npm test` |
 
@@ -61,7 +61,7 @@ reserved in the team agreement §9.2 and never change once allocated.
 | Requirement | Feature | Sprint | Acceptance criteria | Tests | Verification method | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | `NFR-01` Passwords hashed, never plaintext | `F-01` | 1 | within `AC-01` .. `AC-04` | within `TEST-01` .. `TEST-04` | API test reads the stored `passwordHash` back from the database and asserts the `$2a$`/`$2b$` prefix and that it differs from the submitted password | `verified` — closed in PR #8 |
-| `NFR-02` Unauthenticated requests refused | `F-01`, enforced by `SR-01` | 1 | `AC-23`, `AC-37`, and within `AC-01` .. `AC-04` | `TEST-23`, `TEST-37` | API test calls each protected endpoint with no cookie and asserts `401` with no entity data | partly `specified` |
+| `NFR-02` Unauthenticated requests refused | `F-01`, enforced by `SR-01` | 1 | `AC-23`, `AC-37`, and within `AC-01` .. `AC-04` | `TEST-23`, `TEST-37` | API test calls each protected endpoint with no cookie and asserts `401` with no entity data | `pass` — 35/35 on `npm test` for `TEST-23`, `TEST-23b` and `TEST-01`..`TEST-04` · `TEST-37` lands with `F-04` |
 | `NFR-03` List endpoints within 500 ms | `F-03` | 1 | `AC-29` | `TEST-29` | Timer assertion on the second call, after one warm-up call, against seed data | `pass` — 35/35 on `npm test` |
 
 ### System responsibilities
@@ -69,7 +69,7 @@ reserved in the team agreement §9.2 and never change once allocated.
 | Responsibility | Feature | Sprint | Verified by | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | `SR-01` Authorization check order `401 → 404 → 403 → 400` | `F-04` | 1 | `AC-38` proves the order; `AC-23`, `AC-26`, `AC-31`, `AC-33`, `AC-37` each exercise one step | `specified` |
-| `SR-02` Shared error envelope and codes | `F-01` | 1 | Every negative criterion asserts the `code` as well as the status | `specified` |
+| `SR-02` Shared error envelope and codes | `F-01` | 1 | Every negative criterion asserts the `code` as well as the status | `pass` — 35/35 on `npm test` · every refusal test asserts `error.code`, not only the status |
 | `SR-03` Append-only audit history | `F-02`, `F-04` | 1 | `AC-30`, `AC-36` assert a row appears; `AC-31`, `AC-32`, `AC-33` assert none does | `specified` |
 | `SR-04` Monetary precision as `Decimal` | `F-01`, `F-02`, `F-03` | 1 | `TEST-12`, `TEST-20b`, `TEST-28c` | `pass` — 35/35 on `npm test` |
 | `SR-05` Rules enforced server-side | `F-04` | 1 | Every guard has an API-level test that no screen is involved in | `specified` |
@@ -143,7 +143,7 @@ into the Deliverable 1 report.
 | AC | Test | Level | Test file | Result |
 | :--- | :--- | :--- | :--- | :--- |
 | `AC-10` .. `AC-19`, `AC-18b`, `AC-18c`, `AC-19b` | `TEST-10` .. `TEST-19`, `TEST-10b`, `TEST-18b`, `TEST-18c`, `TEST-19b` | API | `tests/api/request-crud.test.ts` | `pass` — 35/35 on `npm test` |
-| `AC-10` .. `AC-19` | `TEST-E2E-01` | E2E | `tests/e2e/requester-journey.spec.ts` | `not run` — Playwright suite not executed yet |
+| `AC-10` .. `AC-19` | `TEST-E2E-01` | E2E | `tests/e2e/requester-journey.spec.ts` | `pass` — 1 passed in 19.1 s, run by KaiDaoMuKrobb while reviewing PR #13 |
 
 ---
 
@@ -155,7 +155,7 @@ below are in elaboration, not in coverage.
 
 | # | Gap | Effect | Owner |
 | :--- | :--- | :--- | :--- |
-| 1 | The Playwright end-to-end suite has not been executed and recorded. `tests/e2e/requester-journey.spec.ts` exists but `TEST-E2E-01` has no result, and `TEST-E2E-02` is not written yet | The two end-to-end rows in §3 carry no verification result | both, before the release PR |
+| 1 | `TEST-E2E-02`, the approval journey, is not written. `tests/e2e/approval-journey.spec.ts` does not exist yet | The `F-04` end-to-end row in §3 carries no verification result. `TEST-E2E-01` was executed and passed during the review of PR #13 | siripitch-c, with `F-04` |
 | 2 | The threshold that triggers the second approval stage is given in `docs/srs.md` only as an example (10,000.00 THB) | `F-06` cannot be specified until the value is agreed and recorded as a design decision | both |
 | 3 | Sprint 2 and Sprint 3 acceptance criteria are not yet allocated | The later-sprint rows in §2 name requirements and features but no `AC` or `TEST` identifiers | both, at each sprint start |
 
