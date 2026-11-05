@@ -243,3 +243,12 @@
 - [x] Request number format `EXP-{YYYY}-{NNNN}` generated sequentially with unique constraint (`BR-06`).
 - [x] Playwright E2E journey `E2E-01` implemented in `tests/e2e/requester-journey.spec.ts` passing against local dev server.
 - [x] Feature implemented on branch `feat/F-02-request-crud` and ready for review via PR into `sprint-1-staging`.
+
+---
+
+## 6. Version History
+
+| Version | Date | Change | Reason |
+| :--- | :--- | :--- | :--- |
+| 1.0 | 4 Nov 2026 | Contract written: feature SDS, API specifications, AC-10..AC-19, STS and Definition of Done (85b730f) | Written before implementation, as Part E requires |
+| 1.1 | 5 Nov 2026 | AC-18b and AC-18c added for reviewer role enforcement; AC-19b added for reviewer visibility of decided requests; TEST-10b added for concurrent number allocation; seed prerequisite recorded in the STS (a7dc6a0) | Peer review found GET /api/reviewers returned every account including emails, that a request could be assigned to a non-reviewer, and that the request number could be issued twice under concurrency |

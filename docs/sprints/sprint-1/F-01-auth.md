@@ -138,3 +138,13 @@
 - [x] Automated unit and integration test suite executing and passing.
 - [x] Feature implemented on branch `feat/F-01-auth` and reviewed by peer (@siripitch-c) via PR into `sprint-1-staging`.
 
+---
+
+## 6. Version History
+
+| Version | Date | Change | Reason |
+| :--- | :--- | :--- | :--- |
+| 1.0 | 3 Nov 2026 | Contract written: feature SDS, API specifications, AC-01..AC-04, STS and Definition of Done (f908da4) | Written before implementation, as Part E requires |
+| 1.1 | 4 Nov 2026 | JWT_SECRET fallback removed; user identifier contract clarified; error vocabulary introduced (7dadc54) | Peer review found the signing key fell back to a hardcoded default and that the response carried two names for one identifier |
+| 1.2 | 4 Nov 2026 | POST /api/auth/logout documented as 401 for an unauthenticated caller and AC-03 extended; ErrorCode union narrowed; author and reviewer named by GitHub handle (a9aaf3b) | Peer review found the handler returned 200 to any caller, contradicting its own Access: Authenticated line |
+| 1.3 | 5 Nov 2026 | NFR-01 verification extended to read the stored passwordHash back from the database | docs/srs.md specifies the raw record must be asserted, not only the output of the hashing function |
