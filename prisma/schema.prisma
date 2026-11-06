@@ -1,0 +1,84 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  REQUESTER
+  REVIEWER
+}
+
+enum RequestStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  RETURNED // Reserved for Sprint 2
+}
+
+model User {
+  id               String            @id @default(uuid())
+  email            String            @unique
+  passwordHash     String
+  name             String
+  role             Role              @default(REQUESTER)
+  department       String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  requests         ExpenseRequest[]  @relation("RequesterRequests")
+  assignedRequests ExpenseRequest[]  @relation("AssignedReviewerRequests")
+  actions          ApprovalHistory[] @relation("ActorActions")
+}
+
+model ExpenseRequest {
+  id                 String            @id @default(uuid())
+  requestNumber      String            @unique // e.g. EXP-2026-0001
+  title              String
+  description        String
+  totalAmount        Decimal           @default(0.0) @db.Decimal(12, 2)
+  status             RequestStatus     @default(DRAFT)
+  requesterId        String
+  requester          User              @relation("RequesterRequests", fields: [requesterId], references: [id])
+  assignedReviewerId String?
+  assignedReviewer   User?             @relation("AssignedReviewerRequests", fields: [assignedReviewerId], references: [id])
+  items              ExpenseItem[]
+  history            ApprovalHistory[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([requesterId])
+  @@index([assignedReviewerId])
+  @@index([status])
+}
+
+model ExpenseItem {
+  id          String         @id @default(uuid())
+  requestId   String
+  request     ExpenseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  category    String         // TRAVEL, MEALS, SUPPLIES, OTHER
+  description String
+  amount      Decimal        @db.Decimal(12, 2)
+  createdAt   DateTime       @default(now())
+
+  @@index([requestId])
+}
+
+model ApprovalHistory {
+  id         String         @id @default(uuid())
+  requestId  String
+  request    ExpenseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actorId    String
+  actor      User           @relation("ActorActions", fields: [actorId], references: [id])
+  fromStatus RequestStatus
+  toStatus   RequestStatus
+  action     String         // SUBMIT, APPROVE, REJECT
+  comment    String?
+  createdAt  DateTime       @default(now())
+
+  @@index([requestId])
+  @@index([actorId])
+}
