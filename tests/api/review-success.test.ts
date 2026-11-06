@@ -155,6 +155,23 @@ describe('Feature F-04: Successful decisions (AC-30, AC-36)', () => {
     expect(rows[0].toStatus).toBe(RequestStatus.REJECTED);
   });
 
+  it('TEST-30c (FR-05): an approval with no reason is refused, like a rejection', async () => {
+    // FR-05 in docs/srs.md: a reviewer decides "with a mandatory comment" and
+    // draws no distinction between approving and rejecting. An approval with no
+    // recorded reason is the gap SR-03 and FR-05 exist to close.
+    const id = await makeSubmittedRequest('NO-REASON-APPROVE');
+
+    const res = await decide(id, { action: 'APPROVE' }, carolCookie);
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.code).toBe('VALIDATION_ERROR');
+
+    const stored = await prisma.expenseRequest.findUnique({ where: { id } });
+    expect(stored?.status).toBe(RequestStatus.SUBMITTED);
+    expect(await prisma.approvalHistory.count({ where: { requestId: id } })).toBe(1);
+  });
+
   it('TEST-30b: the decision response keeps money as a string and carries the full history (DEC-04 / SR-03)', async () => {
     const id = await makeSubmittedRequest('SERIALISE');
 

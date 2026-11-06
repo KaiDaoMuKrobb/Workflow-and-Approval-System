@@ -266,23 +266,20 @@ describe('Feature F-04: Decision guards (AC-31..AC-35, AC-37, AC-38)', () => {
     expect(JSON.stringify(body)).not.toContain(TAG);
   });
 
-  it('TEST-34b (BR-05 decide): a requester who is a stranger to the request gets 404, not 403', async () => {
-    // The caller cannot see the request at all, so step 2 answers before any
-    // permission-specific code can be returned.
-    const id = await makeRequest({
-      requesterId: bobId,
-      assignedReviewerId: carolId,
-      status: RequestStatus.SUBMITTED,
-      suffix: 'STRANGER',
-    });
-
-    const res = await decide(id, { action: 'APPROVE', comment: 'Not mine at all' }, aliceCookie);
+  it('TEST-34b (step 2): deciding an id that does not exist answers 404', async () => {
+    // The one case this endpoint answers 404, now that step 2 is a pure
+    // existence check. A caller who is a stranger to a request that DOES exist
+    // is refused at step 4 with FORBIDDEN instead, which is TEST-33 — the two
+    // together are what prove step 2 and step 4 are separate.
+    const res = await decide(
+      '00000000-0000-0000-0000-000000000000',
+      { action: 'APPROVE', comment: 'No such request' },
+      aliceCookie
+    );
     const body = await res.json();
 
     expect(res.status).toBe(404);
     expect(body.error.code).toBe('NOT_FOUND');
-
-    await expectNoSideEffect(id, RequestStatus.SUBMITTED, 1);
   });
 
   it('TEST-35 / AC-35: REJECT without a reason is refused', async () => {
