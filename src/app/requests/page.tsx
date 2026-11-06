@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Receipt,
   User,
+  ClipboardList,
 } from 'lucide-react';
 
 interface ExpenseItem {
@@ -133,12 +134,21 @@ export default function RequestsPage() {
               <div>
                 <span className="text-lg font-bold text-slate-900 tracking-tight">ExpenseFlow</span>
                 <span className="ml-2 text-xs font-semibold uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-700">
-                  Requester
+                  {currentUser?.role === 'REVIEWER' ? 'Reviewer' : 'Requester'}
                 </span>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
+              {currentUser?.role === 'REVIEWER' && (
+                <Link
+                  href="/reviewer/dashboard"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+                >
+                  <ClipboardList className="w-3.5 h-3.5 text-indigo-600" />
+                  Review Queue
+                </Link>
+              )}
               <div className="flex items-center gap-2 text-sm text-slate-700">
                 <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold">
                   {currentUser?.name?.charAt(0) || <User className="w-4 h-4" />}

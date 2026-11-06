@@ -39,7 +39,7 @@ reserved in the team agreement §9.2 and never change once allocated.
 | `FR-02` Create a request with line items | `F-02` | 1 | `AC-10` .. `AC-13` | `TEST-10` .. `TEST-19` | `pass` — 62/62 on `npm test` |
 | `FR-03` Submit to a named reviewer | `F-02` | 1 | `AC-16` .. `AC-18`, `AC-18b`, `AC-18c` | within `TEST-10` .. `TEST-19` | `pass` — 62/62 on `npm test` |
 | `FR-04` Reviewer sees assigned requests | `F-03` | 1 | `AC-20`, `AC-21`, `AC-22`, `AC-24`, `AC-28` | `TEST-20`, `TEST-21`, `TEST-22`, `TEST-24`, `TEST-28`, `TEST-28d` .. `TEST-28g` | `pass` — 62/62 on `npm test` · `TEST-28d` .. `TEST-28g` were added with `F-04`, which found the queue was not filtering by status as `FR-04` requires |
-| `FR-05` Approve or reject with a reason | `F-04` | 1 | `AC-30`, `AC-36` | `TEST-30`, `TEST-30b`, `TEST-30c`, `TEST-36`, `TEST-E2E-02` | `pass` — 62/62 on `npm test` · the reason is mandatory for **both** decisions, as `FR-05` states · `TEST-E2E-02` written, `not run` |
+| `FR-05` Approve or reject with a reason | `F-04` | 1 | `AC-30`, `AC-36` | `TEST-30`, `TEST-30b`, `TEST-30c`, `TEST-36`, `TEST-E2E-02` | `pass` — 62/62 on `npm test` · the reason is mandatory for **both** decisions, as `FR-05` states · `TEST-E2E-02` passed (6.5 s) |
 
 ### Business Rules
 
@@ -134,7 +134,7 @@ completed after each feature lands and carried into the Deliverable 1 report. Th
 | `AC-37` | `TEST-37`, `TEST-37b` | API | `tests/api/review-guards.test.ts` | `pass` — 62/62 on `npm test` |
 | `AC-38` | `TEST-38` | API | `tests/api/review-guards.test.ts` | `pass` — 62/62 on `npm test` |
 | `AC-39` | `TEST-39`, `TEST-39b` .. `TEST-39g` | UI | `tests/unit/review-buttons.test.tsx` | `pass` — 62/62 on `npm test` |
-| `AC-30`, `AC-39` | `TEST-E2E-02` | E2E | `tests/e2e/approval-journey.spec.ts` | `not run` — written, awaiting a Playwright run |
+| `AC-30`, `AC-39` | `TEST-E2E-02` | E2E | `tests/e2e/approval-journey.spec.ts` | `pass` — 1 passed in 6.5 s, run by KaiDaoMuKrobb while reviewing PR #14 |
 
 > The suite was run and **failed first**: with the tests committed and neither `review/route.ts` nor
 > `ReviewDecisionPanel` written, `npm test` reported `3 failed | 6 passed (9)` with the 35 pre-existing
@@ -164,11 +164,15 @@ below are in elaboration, not in coverage.
 
 | # | Gap | Effect | Owner |
 | :--- | :--- | :--- | :--- |
-| 1 | `TEST-E2E-02` is written but has not been run. `tests/e2e/approval-journey.spec.ts` exists; `npm run test:e2e` has not been executed against it | The `F-04` end-to-end row in §3 reads `not run`. `TEST-E2E-01` was executed and passed during the review of PR #13 | whoever reviews the `F-04` Pull Request |
-| 2 | The threshold that triggers the second approval stage is given in `docs/srs.md` only as an example (10,000.00 THB) | `F-06` cannot be specified until the value is agreed and recorded as a design decision | both |
-| 3 | Sprint 2 and Sprint 3 acceptance criteria are not yet allocated | The later-sprint rows in §2 name requirements and features but no `AC` or `TEST` identifiers | both, at each sprint start |
-| 5 | `docs/system-sds.md` §3.1 draws two detail routes, `/requests/[id]` for a requester and `/reviewer/requests/[id]` for a reviewer. `F-03` built **one** shared page at `/requests/[id]` and `F-04` added the decision controls to it, which the contracts record but the SDS does not | No functional difference: the same page serves both, and what it offers follows the viewer, which `AC-39` and `TEST-39b` .. `TEST-39g` verify. The SDS diagram is out of date | siripitch-c — update the SDS diagram, or record the single-page decision in it, before the release PR |
-| 4 | Agreement §7.2, the four-line summary of the check order, says step 2 answers `404` when the caller is *“not entitled to see that it exists”*. Read literally that applies to `POST /review` as well, where it would make `403 FORBIDDEN` unreachable | None in the code. `docs/srs.md` `BR-05` and the `docs/system-sds.md` §4 access matrix both state the view/decide split explicitly, and `F-04` follows them. Only the agreement summary is loose | KaiDaoMuKrobb — one clarifying clause in agreement §7.2, so the next person does not re-derive it |
+| 1 | The threshold that triggers the second approval stage is given in `docs/srs.md` only as an example (10,000.00 THB) | `F-06` cannot be specified until the value is agreed and recorded as a design decision | both, at Sprint 2 start |
+| 2 | Sprint 2 and Sprint 3 acceptance criteria are not yet allocated | The later-sprint rows in §2 name requirements and features but no `AC` or `TEST` identifiers | both, at each sprint start |
+| 3 | `docs/system-sds.md` §3.1 draws two detail routes, `/requests/[id]` for a requester and `/reviewer/requests/[id]` for a reviewer. `F-03` built **one** shared page at `/requests/[id]` and `F-04` added the decision controls to it, which the contracts record but the SDS does not | No functional difference: the same page serves both, and what it offers follows the viewer, which `AC-39` and `TEST-39b` .. `TEST-39g` verify. The SDS diagram is out of date | siripitch-c — update the SDS diagram, or record the single-page decision in it, before the release PR |
+
+> **Closed Sprint 1 Gaps:**
+> - `NFR-01` (Password hash verification): closed in PR #8.
+> - `TEST-E2E-01` (Requester E2E journey): executed and verified (19.1 s) during PR #13 review.
+> - `TEST-E2E-02` (Reviewer approval E2E journey): executed and verified (6.5 s) during PR #14 review.
+> - Agreement §7.2 check order wording: clarified in agreement §7.2 distinguishing read 404 from decide 403 semantics.
 
 No requirement in the Sprint 1 baseline is without an allocated feature.
 
