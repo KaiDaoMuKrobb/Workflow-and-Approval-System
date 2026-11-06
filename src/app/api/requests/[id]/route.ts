@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUserFromRequest } from '@/lib/auth';
 import { jsonSuccess, jsonError } from '@/lib/api-response';
+import { canViewRequest } from '@/lib/authorization';
 import { Prisma, RequestStatus } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
@@ -39,12 +40,10 @@ export async function GET(
       },
     });
 
-    // Zero-knowledge access control (DEC-03 / BR-05): 404 for unauthorized view
-    if (
-      !request ||
-      (request.requesterId !== sessionUser.id &&
-        request.assignedReviewerId !== sessionUser.id)
-    ) {
+    // Zero-knowledge access control (DEC-03 / BR-05): 404 for unauthorized view.
+    // The rule itself lives in src/lib/authorization.ts so that this handler and
+    // the decision endpoint cannot answer AC-26 and AC-34 differently.
+    if (!canViewRequest(request, sessionUser.id)) {
       return jsonError('Request not found', 'NOT_FOUND', 404);
     }
 

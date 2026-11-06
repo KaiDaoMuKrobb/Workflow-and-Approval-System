@@ -9,6 +9,7 @@ import {
   FileQuestion,
   History as HistoryIcon,
 } from 'lucide-react';
+import ReviewDecisionPanel from '@/components/ReviewDecisionPanel';
 
 interface ExpenseItem {
   id: string;
@@ -36,6 +37,8 @@ interface RequestDetail {
   status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
   createdAt: string;
   updatedAt: string;
+  requesterId: string;
+  assignedReviewerId: string | null;
   requester?: { id: string; name: string; department?: string } | null;
   assignedReviewer?: { id: string; name: string } | null;
   items: ExpenseItem[];
@@ -54,6 +57,18 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Who is viewing. The decision controls cannot be offered until this is known,
+  // which is why ReviewDecisionPanel renders nothing while it is null.
+  const [viewerId, setViewerId] = useState<string | null>(null);
+  const [viewerRole, setViewerRole] = useState<'REQUESTER' | 'REVIEWER' | null>(null);
+
+  // This page is reached from two different screens. A reviewer arrives from the
+  // review queue, a requester from their own claim list, and sending both to the
+  // reviewer dashboard stranded the requester on a page built for somebody else.
+  // Until the session is known, the claim list is the safe answer: every account
+  // has one.
+  const backHref = viewerRole === 'REVIEWER' ? '/reviewer/dashboard' : '/requests';
+  const backLabel = viewerRole === 'REVIEWER' ? 'Back to dashboard' : 'Back to my claims';
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -84,6 +99,27 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
   }, [params.id]);
 
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) return;
+        const body = await res.json();
+        if (!cancelled) {
+          setViewerId(body.data.user.id);
+          setViewerRole(body.data.user.role);
+        }
+      } catch {
+        // The page is still readable without knowing the viewer; it simply
+        // offers no decision controls.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     load();
   }, [load]);
 
@@ -92,11 +128,11 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-4xl px-4 py-4 sm:px-6">
           <Link
-            href="/reviewer/dashboard"
+            href={backHref}
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Back to dashboard
+            {backLabel}
           </Link>
         </div>
       </header>
@@ -116,8 +152,8 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
           <div className="flex flex-col items-center rounded-lg border border-slate-200 bg-white px-6 py-16 text-center">
             <FileQuestion className="mb-3 h-10 w-10 text-slate-400" aria-hidden="true" />
             <p className="text-base font-medium text-slate-700">Request not found</p>
-            <Link href="/reviewer/dashboard" className="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-800">
-              Return to the dashboard
+            <Link href={backHref} className="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-800">
+              {viewerRole === 'REVIEWER' ? 'Return to the dashboard' : 'Return to my claims'}
             </Link>
           </div>
         )}
@@ -211,6 +247,17 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
                 </tfoot>
               </table>
             </section>
+
+            <ReviewDecisionPanel
+              request={{
+                id: request.id,
+                status: request.status,
+                requesterId: request.requesterId,
+                assignedReviewerId: request.assignedReviewerId,
+              }}
+              viewerId={viewerId}
+              onDecided={load}
+            />
 
             <section className="rounded-lg border border-slate-200 bg-white p-6">
               <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
