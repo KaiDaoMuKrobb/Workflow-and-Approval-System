@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ClipboardList, LogOut, RefreshCw, AlertTriangle, FileText } from 'lucide-react';
 import ReviewerQueue, { QueueRequest } from '@/components/ReviewerQueue';
+import { selectReviewQueue } from '@/lib/review-queue';
 
 interface SessionUser {
   id: string;
@@ -35,6 +36,17 @@ export default function DashboardPage() {
       }
       const me = await meRes.json();
       const sessionUser: SessionUser = me.data.user;
+
+      // A requester has no review queue, so this page has nothing to tell them.
+      // Without this they were shown a screen headed "Reviewer Dashboard" with
+      // their own name and the role REQUESTER beneath it, and an empty state
+      // saying no requests were waiting for their review. Found by opening the
+      // page as Alice while checking F-04; see F-04 contract section 8, 1.5.
+      if (sessionUser.role !== 'REVIEWER') {
+        router.replace('/requests');
+        return;
+      }
+
       setUser(sessionUser);
 
       const listRes = await fetch('/api/requests');
@@ -44,13 +56,14 @@ export default function DashboardPage() {
       }
       const list = await listRes.json();
 
-      // The endpoint returns everything the caller may see: their own requests and,
-      // for a reviewer, the ones assigned to them. The queue shows only the second
-      // group, so a reviewer who also raises requests does not review their own work
-      // from this screen. BR-01 is still enforced server-side in F-04 regardless.
-      const assignedToMe: QueueRequest[] = (list.data.requests as Array<
-        QueueRequest & { assignedReviewer?: { id: string } | null; requester?: { id: string } | null }
-      >).filter((r) => r.assignedReviewer?.id === sessionUser.id && r.requester?.id !== sessionUser.id);
+      // What belongs in a review queue is FR-04's question, not this screen's, so
+      // the rule lives in src/lib/review-queue.ts where it can be tested.
+      const assignedToMe = selectReviewQueue(
+        list.data.requests as Array<
+          QueueRequest & { assignedReviewer?: { id: string } | null; requester?: { id: string } | null }
+        >,
+        sessionUser.id
+      );
 
       setRequests(assignedToMe);
     } catch {
