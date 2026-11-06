@@ -157,12 +157,20 @@ These controls are added to the `/requests/[id]` page that `F-03` builds.
 | **`AC-35`** | **Given** Carol is the assigned reviewer and the status is `SUBMITTED`<br>**When** she posts `{ action: "REJECT" }` with no comment<br>**Then** `400` · `code = VALIDATION_ERROR` · the status is unchanged |
 | **`AC-36`** | **Given** the same conditions<br>**When** she posts `{ action: "REJECT", comment: "Receipts incomplete" }`<br>**Then** `200` · status becomes `REJECTED` · the history row keeps the reason |
 | **`AC-37`** | **Given** no session<br>**When** the endpoint is called<br>**Then** `401` · `UNAUTHENTICATED` · nothing in the database changes |
-| **`AC-38`** | **Given** David is both the requester and the assigned reviewer of the same request<br>**When** he posts a decision<br>**Then** `403` · `code = SELF_APPROVAL`, **not** `FORBIDDEN` — confirming `BR-01` is checked before `BR-05` |
+| **`AC-38`** | **Given** David, who holds the `REVIEWER` role, raised request X and assigned it to **Carol**, status `SUBMITTED`<br>**When** David posts a decision<br>**Then** `403` · `code = SELF_APPROVAL`, **not** `FORBIDDEN` — he fails `BR-01` and `BR-05` at the same time, so the answer names whichever guard ran first |
 | **`AC-39`** | **Given** Carol is the assigned reviewer and `/requests/[id]` is open<br>**When** the status is `APPROVED`<br>**Then** the Approve and Reject controls are absent |
 
-> **`AC-38` is the most important criterion in this contract.** It is the only one that proves `DEC-06` was
-> actually implemented. If the guards are written in the wrong order this test returns `FORBIDDEN` and
-> fails, while every other test would still pass and the defect would go unnoticed.
+> **`AC-38` is the most important criterion in this contract**, and the only one that proves `DEC-06` was
+> actually implemented. Every other criterion trips exactly one guard, so each would pass whatever order the
+> guards are written in. `AC-38` trips two at once: David raised the request, which fails `BR-01`, and he is
+> not the reviewer it was assigned to, which fails `BR-05`. Only the guard that runs first can name itself
+> in the response, so the body it returns reports the order the code was written in. Written the wrong way
+> round this test returns `FORBIDDEN` and fails, while the other nine still pass.
+>
+> This requires David to hold the `REVIEWER` role and to have assigned the request to **someone else**. If
+> he had assigned it to himself he would satisfy `BR-05`, only `BR-01` would fire, and the test would return
+> `SELF_APPROVAL` whichever order the guards were in — proving nothing. That is the scenario `AC-31` already
+> covers, and keeping it here as well is what version 1.2 of this contract corrected.
 
 ### A note on `AC-34`
 
@@ -184,9 +192,35 @@ actors differ — `AC-26` is an **unrelated reviewer**, `AC-34` is **another req
 | `TEST-35` | `AC-35` | API | Sign in as Carol · `REJECT` with no comment | `400` · `VALIDATION_ERROR` |
 | `TEST-36` | `AC-36` | API | Sign in as Carol · `REJECT` with a comment | `200` · `status = REJECTED` · history keeps the comment |
 | `TEST-37` | `AC-37` | API | Send no cookie | `401` · `UNAUTHENTICATED` · status in the database unchanged |
-| `TEST-38` | `AC-38` | API | Sign in as David · request where he is both requester and assigned reviewer | `403` · **`SELF_APPROVAL`**, not `FORBIDDEN` |
+| `TEST-38` | `AC-38` | API | Sign in as David · request David raised but **Carol** is assigned to · `APPROVE` | `403` · **`SELF_APPROVAL`**, not `FORBIDDEN` · status unchanged |
 | `TEST-39` | `AC-39` | UI | Render the detail page as Carol with a request in status `APPROVED` | Approve and Reject controls are not in the document |
 | `TEST-E2E-02` | `AC-30`, `AC-39` | E2E | Follow the `E2E-02` script in agreement §10 | Status on screen reads `APPROVED` · a new history row appears · the controls disappear |
+
+### 5.1 Supplementary tests
+
+These are written alongside the criteria above and exist in the same files. They are listed because a test
+that exists only in the code is not specified, and because most of them are the **success** direction of a
+rule whose refusal is already covered — a suite made only of refusals passes even when the feature does
+nothing at all.
+
+| Test ID | Covers | Level | Why it exists |
+| :--- | :--- | :--- | :--- |
+| `TEST-30b` | `DEC-04`, `SR-03` | API | The decision response must keep `totalAmount` a string, and must return the `SUBMIT` row as well as the new `APPROVE` row — proving the history was appended to, not replaced |
+| `TEST-32b` | `BR-02` | API | `AC-32` only covers a terminal state. `DRAFT → APPROVED` is also not a permitted transition, and nothing else refuses it |
+| `TEST-33b` | `DEC-06` | API | Agreement §6: an unrelated reviewer acting on a request already decided must get `403`, not `400`, because the permission guard precedes the state guard |
+| `TEST-34b` | `BR-05`, `DEC-03` | API | `AC-34` covers the read path. The same stranger calling the **decide** endpoint must also get `404`, not `403`, or the endpoint would confirm the request exists |
+| `TEST-35b` | §3.2 | API | `AC-35` covers `REJECT` with no reason. An `action` that is neither `APPROVE` nor `REJECT` is the other half of the same validation |
+| `TEST-37b` | `DEC-06` | API | Step 1 precedes step 2, so an anonymous caller must get `401` for an id that does not exist — otherwise the difference between `401` and `404` tells them which ids are real |
+| `TEST-39b` | `AC-39` success case | UI | The assigned reviewer of a `SUBMITTED` request **must** see the comment field and both buttons. Without this, a panel that renders nothing would pass every other UI test |
+| `TEST-39c` | `BR-01` | UI | The person who raised the request sees no controls, even when they are also the assigned reviewer — the screen half of `AC-31` |
+| `TEST-39d` | `BR-05` | UI | A reviewer who is not the assigned one sees no controls — the screen half of `AC-33` |
+| `TEST-39e` | `BR-02` | UI | `AC-39` names `APPROVED`. `REJECTED` is the other terminal state and must behave identically |
+| `TEST-39f` | `BR-02` | UI | A `DRAFT` request offers nothing to decide |
+| `TEST-39g` | §3.3 | UI | The viewer is learned from `/api/auth/me` after the first paint. Until it resolves, no controls are offered, so a button never flashes at a viewer who may not use it |
+
+> None of these replaces an API guard. Every case above is also refused by the endpoint in
+> `tests/api/review-guards.test.ts`; the UI rows only prove the page does not invite a click that would be
+> refused.
 
 Test files
 
@@ -248,6 +282,8 @@ after it was first written is recorded here rather than left to the Git log alon
 | Version | Date | Change | Reason |
 | :--- | :--- | :--- | :--- |
 | 1.0 | 5 Nov 2026 | Contract drafted: requirements, check order, API and UI specifications, `AC-30`..`AC-39`, STS and Definition of Done | Drafted while `F-03` was in review so that no implementation would begin without a contract, as Part E requires |
+| 1.3 | 6 Nov 2026 | §5.1 added, specifying the twelve supplementary tests written alongside the ten criteria | `F-03` shipped four tests that existed in the code but in no document, so the specification did not describe everything the suite verified. Writing them down as they were written avoids repeating that. Six of the twelve are success cases or second halves of a rule whose refusal was already covered |
+| 1.2 | 6 Nov 2026 | `AC-38` and `TEST-38` rewritten: David now assigns the request to Carol instead of to himself, and must hold the `REVIEWER` role; the note explaining why `AC-38` matters was rewritten with the arithmetic of which guards fire | As drafted, `AC-38` described the same situation as the locked `AC-31` — David raising a request and assigning it to himself — and the claim attached to it was false. In that situation David **is** the assigned reviewer, so `BR-05` never fires, only `BR-01` does, and the endpoint answers `SELF_APPROVAL` no matter which order the guards are written in. The one criterion the contract calls its most important would have passed over a wrong implementation. `AC-38` is not in the locked set in agreement §9.4, so the scenario could be corrected rather than the number |
 | 1.1 | 6 Nov 2026 | §7 rewritten: the open proposal to extract the visibility check became a decision, with `F-04` named as the owner and `src/lib/authorization.ts` named as the file; §3.2 records that the new endpoint calls that function; §6 gained the matching Definition of Done item; §8 and §9 added | The proposal was written before `F-03` was implemented. `F-03` shipped the predicate inline, so the question the draft left open had to be answered before any code was written here, or the rule would exist in two places. Part E also asks for a version history on every contract, which the draft did not have |
 
 ---
