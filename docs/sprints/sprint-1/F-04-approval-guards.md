@@ -302,8 +302,8 @@ tests/e2e/approval-journey.spec.ts   TEST-E2E-02
 - [ ] A Pull Request is opened into `sprint-1-staging` and **KaiDaoMuKrobb reviews it naming a specific check**
 - [x] The running application was opened and each case in §3.3 confirmed on screen, as a reviewer and as a
       requester — which is how the two defects recorded in §3.3 were found
-- [x] Any incomplete work is stated rather than left silent — §9.6, and gaps 1, 4 and 5 in
-      `docs/traceability.md` §4
+- [x] Any incomplete work is stated rather than left silent — §9.6. Everything this feature left open has
+      since closed except the missing test for two of the §3.3 repairs, which §9.6 names
 
 ---
 
@@ -363,6 +363,7 @@ after it was first written is recorded here rather than left to the Git log alon
 | 1.6 | 6 Nov 2026 | The decision comment became mandatory for **both** `APPROVE` and `REJECT`, in §3.2, in the endpoint and in the panel; `TEST-30c` added; §9.5 rewritten after the baseline documents were re-read | `FR-05` in `docs/srs.md` reads *“can approve or reject a submitted request **with a mandatory comment**”* and draws no distinction between the two. This contract had narrowed it to rejection only, which would have shipped approvals with no recorded reason — the opposite of what `FR-05` and `SR-03` exist for. Found by re-reading the baseline against the finished code rather than by any test |
 | 1.7 | 6 Nov 2026 | A third screen defect recorded in §3.3: the reviewer queue was not filtering by status. The rule moved to `src/lib/review-queue.ts` with `TEST-28d` .. `TEST-28g` | `FR-04` in `docs/srs.md` reads *“all **`SUBMITTED`** requests specifically assigned to them”*, and the dashboard filtered only on the assignment. An approved claim stayed in the queue, which also made the `AC-28` empty state unreachable in any normal demonstration. Found by approving a claim and looking at the dashboard afterwards. No test could have caught it: `TEST-28` and `TEST-28b` render the queue component directly and never see the selection, which is why the selection now has its own |
 | 1.8 | 6 Nov 2026 | §7 rewritten again, §3.2's note inverted, and the matching Definition of Done item corrected | All three said the decision endpoint calls `canViewRequest`, and it does not. Version 1.1 made that decision before the endpoint existed, on the premise that step 2 would ask the same question as the read handler; v1.4 then established that it must not, and the three statements were left behind saying the opposite of what the code does. The extraction is kept, with the narrower justification it actually has, and the one place that still states the rule in another form — the list query — is named rather than left implied |
+| 1.9 | 7 Nov 2026 | §9.6 rewritten: the two items it listed as undone are closed and struck through and the one that remains is named; the last Definition of Done item no longer cites gap numbers | `TEST-E2E-02` was executed during the review of PR #14 and passed, and the `system-sds.md` §3.1 diagram was redrawn before the release PR. Leaving the section as a list of open items would have understated the state of the feature in the document a TA reads. The Definition of Done cited “gaps 1, 4 and 5”, and the gap table has been renumbered twice since, so those numbers now point at unrelated rows |
 
 ---
 
@@ -401,13 +402,14 @@ after it was first written is recorded here rather than left to the Git log alon
    raising with KaiDaoMuKrobb is only that **agreement §7.2 is a summary and reads as if it overrides
    them** — one clause there would stop the next person re-deriving this.
 
-6. **What is knowingly left undone.**
-   - `TEST-E2E-02` is written but has not been run. Running Playwright requires the development server and
-     a seeded database, and the reviewer of this Pull Request is the natural person to run it — as happened
-     with `TEST-E2E-01` during the review of PR #13. Gap 1 in `docs/traceability.md` records it.
-   - The two repairs in §3.3 have no automated test. Both live in page components that fetch on mount and
-     this project has no request-mocking layer; they were verified against the running application instead,
-     as reviewer and as requester. Stated here rather than counted as coverage.
-   - `docs/system-sds.md` §3.1 still draws two detail routes, `/requests/[id]` and `/reviewer/requests/[id]`.
-     `F-03` built one shared page and `F-04` added the controls to it. Recorded as gap 5.
+6. **What was left undone when this contract was written, and what became of it.**
+   - ~~`TEST-E2E-02` is written but has not been run.~~ **Closed.** KaiDaoMuKrobb executed it while
+     reviewing PR #14 and it passed in 6.5 s, the same way `TEST-E2E-01` was executed during PR #13.
+   - ~~`docs/system-sds.md` §3.1 still draws two detail routes.~~ **Closed.** The diagram was redrawn to
+     the single shared `/requests/[id]` before the release PR, with the reason and the role-dependent back
+     link recorded beneath it.
+   - **Still open:** the role guard and the back-link repair in §3.3 have no automated test. Both live in
+     page components that fetch on mount and this project has no request-mocking layer; they were verified
+     against the running application as a reviewer and as a requester. Stated here rather than counted as
+     coverage. The queue repair in the same section does have tests — `TEST-28d` .. `TEST-28g`.
 

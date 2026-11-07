@@ -130,24 +130,35 @@ erDiagram
 ```mermaid
 flowchart LR
     Login["/login\n(Authentication Gateway)"]
-    
+
     subgraph RequesterView["Requester Navigation Workspace"]
         ReqDash["/requests\n(Personal Requests List)"]
         ReqNew["/requests/new\n(Create Request & Dynamic Items)"]
-        ReqDetail["/requests/[id]\n(View Details / Submit Request)"]
     end
 
     subgraph ReviewerView["Reviewer Navigation Workspace"]
         RevDash["/reviewer/dashboard\n(Assigned Approvals Queue)"]
-        RevDetail["/reviewer/requests/[id]\n(Inspect & Approve / Reject)"]
     end
+
+    Detail["/requests/[id]\n(Shared Request Detail & Decision)"]
 
     Login -->|Role: REQUESTER| ReqDash
     Login -->|Role: REVIEWER| RevDash
     ReqDash --> ReqNew
-    ReqDash --> ReqDetail
-    RevDash --> RevDetail
+    ReqDash --> Detail
+    RevDash --> Detail
+    Detail -->|Back: REQUESTER| ReqDash
+    Detail -->|Back: REVIEWER| RevDash
 ```
+
+> **One detail page, not two.** An earlier revision of this diagram drew a separate
+> `/reviewer/requests/[id]`. `F-03` built a single page at `/requests/[id]` and `F-04` added the decision
+> controls to it rather than duplicating the screen: the two would have shared every field, every state and
+> the same `GET /api/requests/:id` call. What the page offers follows the viewer — the Approve and Reject
+> controls appear only for the assigned reviewer of a `SUBMITTED` request, and the back link returns each
+> viewer to the list they came from. `TEST-39` and `TEST-39b` .. `TEST-39g` verify both directions. Hiding
+> the controls is not the authorization: every one of those cases is also refused by
+> `POST /api/requests/:id/review` (`SR-05`).
 
 ### 3.2 Shared UI Behaviors & States
 - **Validation State:** Client forms provide immediate visual validation (e.g., negative amounts highlight red, missing reviewer disables submit).
