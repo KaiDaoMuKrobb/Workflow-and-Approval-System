@@ -68,7 +68,7 @@ reserved in the team agreement §9.2 and never change once allocated.
 
 | Responsibility | Feature | Sprint | Verified by | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| `SR-01` Authorization check order `401 → 404 → 403 → 400` | `F-04` | 1 | `AC-38` proves the order; `AC-23`, `AC-26`, `AC-31`, `AC-33`, `AC-37` each exercise one step, and `TEST-33b`, `TEST-34b`, `TEST-37b` cover the boundaries between them | `pass` — 62/62 on `npm test` · step 2 at `POST /review` is an existence check only, see gap 4 |
+| `SR-01` Authorization check order `401 → 404 → 403 → 400` | `F-04` | 1 | `AC-38` proves the order; `AC-23`, `AC-26`, `AC-31`, `AC-33`, `AC-37` each exercise one step, and `TEST-33b`, `TEST-34b`, `TEST-37b` cover the boundaries between them | `pass` — 62/62 on `npm test` · step 2 at `POST /review` is an existence check only, as `BR-05` in `docs/srs.md` and the access matrix in `docs/system-sds.md` §4 require |
 | `SR-02` Shared error envelope and codes | `F-01` | 1 | Every negative criterion asserts the `code` as well as the status | `pass` — 62/62 on `npm test` · every refusal test asserts `error.code`, not only the status |
 | `SR-03` Append-only audit history | `F-02`, `F-04` | 1 | `AC-30`, `AC-36` assert a row appears; `AC-31`, `AC-32`, `AC-33` assert none does; `TEST-30b` asserts the earlier `SUBMIT` row survives the decision | `pass` — 62/62 on `npm test` · every refusal test re-reads the record, so a guard that wrote before refusing would fail |
 | `SR-04` Monetary precision as `Decimal` | `F-01`, `F-02`, `F-03` | 1 | `TEST-12`, `TEST-20b`, `TEST-28c` | `pass` — 62/62 on `npm test` |
@@ -166,12 +166,12 @@ below are in elaboration, not in coverage.
 | :--- | :--- | :--- | :--- |
 | 1 | The threshold that triggers the second approval stage is given in `docs/srs.md` only as an example (10,000.00 THB) | `F-06` cannot be specified until the value is agreed and recorded as a design decision | both, at Sprint 2 start |
 | 2 | Sprint 2 and Sprint 3 acceptance criteria are not yet allocated | The later-sprint rows in §2 name requirements and features but no `AC` or `TEST` identifiers | both, at each sprint start |
-| 3 | `docs/system-sds.md` §3.1 draws two detail routes, `/requests/[id]` for a requester and `/reviewer/requests/[id]` for a reviewer. `F-03` built **one** shared page at `/requests/[id]` and `F-04` added the decision controls to it, which the contracts record but the SDS does not | No functional difference: the same page serves both, and what it offers follows the viewer, which `AC-39` and `TEST-39b` .. `TEST-39g` verify. The SDS diagram is out of date | siripitch-c — update the SDS diagram, or record the single-page decision in it, before the release PR |
 
 > **Closed Sprint 1 Gaps:**
 > - `NFR-01` (Password hash verification): closed in PR #8.
 > - `TEST-E2E-01` (Requester E2E journey): executed and verified (19.1 s) during PR #13 review.
 > - `TEST-E2E-02` (Reviewer approval E2E journey): executed and verified (6.5 s) during PR #14 review.
+> - `docs/system-sds.md` §3.1 navigation diagram: redrawn to the single shared `/requests/[id]` the product actually has, with the reason and the role-dependent back link recorded beneath it.
 > - Agreement §7.2 check order wording: clarified in agreement §7.2 distinguishing read 404 from decide 403 semantics.
 
 No requirement in the Sprint 1 baseline is without an allocated feature.

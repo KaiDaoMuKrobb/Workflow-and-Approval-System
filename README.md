@@ -25,23 +25,41 @@ ExpenseFlow is an enterprise-grade full-stack web application developed for **CP
 - Node.js >= 20.x and npm
 - Docker Desktop (for containerized PostgreSQL)
 
-### 1. Start Database Container
+### 1. Configure Environment Variables
+Copy the template. Prisma reads `DATABASE_URL` from `.env`, and the application refuses to sign a session
+without `JWT_SECRET`, so every step below fails until this file exists. `.env` is git-ignored and never
+committed.
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+The template points at the containerised database started in the next step and carries a development
+`JWT_SECRET`. Replace that value before deploying anywhere real.
+
+### 2. Start Database Container
 ```bash
 docker compose up -d
 ```
 
-### 2. Install Dependencies
+### 3. Install Dependencies
 ```bash
 npm install
 ```
 
-### 3. Apply Database Migrations & Seed Accounts
+### 4. Apply Database Migrations & Seed Accounts
 ```bash
 npx prisma migrate dev
 npm run db:seed
 ```
 
-### 4. Run Development Server
+### 5. Run Development Server
 ```bash
 npm run dev
 ```
