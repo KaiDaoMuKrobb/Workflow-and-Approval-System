@@ -6,8 +6,8 @@ import { ShieldCheck, LogIn, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('alice.req@test.com');
-  const [password, setPassword] = useState('Password123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -70,7 +70,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="name@test.com"
+              placeholder="name@company.com"
             />
           </div>
 
@@ -95,58 +95,6 @@ export default function LoginPage() {
             <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
           </button>
         </form>
-
-        <div className="mt-8 pt-6 border-t border-slate-100">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-            Quick Fill Demo Accounts (Password: Password123!)
-          </p>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('alice.req@test.com');
-                setPassword('Password123!');
-              }}
-              className="p-2 text-left bg-slate-50 hover:bg-slate-100 rounded border border-slate-200 text-slate-700"
-            >
-              <div className="font-medium">Alice (Requester)</div>
-              <div className="text-slate-400">Engineering</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('carol.rev@test.com');
-                setPassword('Password123!');
-              }}
-              className="p-2 text-left bg-slate-50 hover:bg-slate-100 rounded border border-slate-200 text-slate-700"
-            >
-              <div className="font-medium">Carol (Reviewer)</div>
-              <div className="text-slate-400">Engineering</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('david.both@test.com');
-                setPassword('Password123!');
-              }}
-              className="p-2 text-left bg-slate-50 hover:bg-slate-100 rounded border border-slate-200 text-slate-700"
-            >
-              <div className="font-medium">David (Dual Role)</div>
-              <div className="text-slate-400">BR-01 Test</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('bob.req@test.com');
-                setPassword('Password123!');
-              }}
-              className="p-2 text-left bg-slate-50 hover:bg-slate-100 rounded border border-slate-200 text-slate-700"
-            >
-              <div className="font-medium">Bob (Requester)</div>
-              <div className="text-slate-400">Marketing</div>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

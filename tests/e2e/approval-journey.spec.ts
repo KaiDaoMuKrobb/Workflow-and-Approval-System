@@ -10,6 +10,8 @@ import { test, expect } from '@playwright/test';
  * TEST-E2E-01 having run before it. Playwright orders spec files
  * alphabetically, so approval-journey runs first and could not rely on it.
  */
+const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD || 'Password123!';
+
 test.describe('E2E-02: Reviewer Inspection & Approval Journey', () => {
   test('Carol opens the request assigned to her and approves it', async ({ page }) => {
     const uniqueTitle = `Client Meeting Expenses ${Date.now()}`;
@@ -17,7 +19,7 @@ test.describe('E2E-02: Reviewer Inspection & Approval Journey', () => {
     // ---- Prerequisite: Alice raises and submits a claim to Carol ----------
     await page.goto('/login');
     await page.fill('input[type="email"]', 'alice.req@test.com');
-    await page.fill('input[type="password"]', 'Password123!');
+    await page.fill('input[type="password"]', DEMO_PASSWORD);
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/\/requests/);
 
@@ -38,7 +40,7 @@ test.describe('E2E-02: Reviewer Inspection & Approval Journey', () => {
     await page.context().clearCookies();
     await page.goto('/login');
     await page.fill('input[type="email"]', 'carol.rev@test.com');
-    await page.fill('input[type="password"]', 'Password123!');
+    await page.fill('input[type="password"]', DEMO_PASSWORD);
     await page.click('button[type="submit"]');
 
     // ---- Step 2: the reviewer dashboard shows the claim from Alice ---------

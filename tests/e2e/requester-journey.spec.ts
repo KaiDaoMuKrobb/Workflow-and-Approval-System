@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD || 'Password123!';
+
 test.describe('E2E-01: Requester Expense Claim Creation & Submission Journey', () => {
   test('Alice logs in, creates a 2-item expense claim, and submits it to Carol', async ({ page }) => {
     // 1. Visit login page
@@ -8,7 +10,7 @@ test.describe('E2E-01: Requester Expense Claim Creation & Submission Journey', (
 
     // 2. Fill login credentials as Alice
     await page.fill('input[type="email"]', 'alice.req@test.com');
-    await page.fill('input[type="password"]', 'Password123!');
+    await page.fill('input[type="password"]', DEMO_PASSWORD);
     await page.click('button[type="submit"]');
 
     // 3. Expect redirection to /requests dashboard
