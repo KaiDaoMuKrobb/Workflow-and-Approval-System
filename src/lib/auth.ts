@@ -20,6 +20,13 @@ export function getJwtSecret(): string {
   return secret;
 }
 
+export function shouldUseSecureCookie(): boolean {
+  const override = process.env.COOKIE_SECURE;
+  if (override === 'true') return true;
+  if (override === 'false') return false;
+  return process.env.NODE_ENV === 'production';
+}
+
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
 }

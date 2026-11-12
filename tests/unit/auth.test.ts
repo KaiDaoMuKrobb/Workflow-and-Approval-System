@@ -1,8 +1,18 @@
-import { describe, it, expect } from 'vitest';
-import { hashPassword, comparePassword, signToken, verifyToken, getJwtSecret } from '../../src/lib/auth';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import {
+  hashPassword,
+  comparePassword,
+  signToken,
+  verifyToken,
+  getJwtSecret,
+  shouldUseSecureCookie,
+} from '../../src/lib/auth';
 import { Role } from '@prisma/client';
 
 describe('Auth Utility & NFR-01 (Password Security)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
   it('NFR-01: hashes password with bcrypt so hash prefix is $2a$ or $2b$ and not plaintext', async () => {
     const plain = 'Password123!';
     const hashed = await hashPassword(plain);
@@ -44,5 +54,21 @@ describe('Auth Utility & NFR-01 (Password Security)', () => {
     } finally {
       process.env.JWT_SECRET = originalSecret;
     }
+  });
+
+  it('shouldUseSecureCookie defaults to NODE_ENV=production and respects COOKIE_SECURE override', () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('COOKIE_SECURE', '');
+    expect(shouldUseSecureCookie()).toBe(false);
+
+    vi.stubEnv('NODE_ENV', 'production');
+    expect(shouldUseSecureCookie()).toBe(true);
+
+    vi.stubEnv('COOKIE_SECURE', 'false');
+    expect(shouldUseSecureCookie()).toBe(false);
+
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('COOKIE_SECURE', 'true');
+    expect(shouldUseSecureCookie()).toBe(true);
   });
 });
