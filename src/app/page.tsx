@@ -48,6 +48,10 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        <p className="mt-8 text-xs text-slate-400">
+          Continuously deployed to Google Cloud Run from the main branch.
+        </p>
       </div>
     </main>
   );
