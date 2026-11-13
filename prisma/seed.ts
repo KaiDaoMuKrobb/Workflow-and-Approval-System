@@ -4,10 +4,20 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding baseline accounts for ExpenseFlow...');
+  if (process.env.SEED_DEMO_DATA !== 'true') {
+    console.log('SEED_DEMO_DATA is not "true"; skipping demo user seeding.');
+    return;
+  }
 
-  // Standard password for all seed accounts
-  const passwordHash = await bcrypt.hash('Password123!', 10);
+  const demoPassword = process.env.DEMO_USER_PASSWORD;
+  if (!demoPassword) {
+    throw new Error(
+      'DEMO_USER_PASSWORD environment variable is required when SEED_DEMO_DATA=true.'
+    );
+  }
+
+  console.log('Seeding baseline demo accounts for ExpenseFlow...');
+  const passwordHash = await bcrypt.hash(demoPassword, 10);
 
   const seedUsers = [
     {
@@ -41,17 +51,17 @@ async function main() {
   ];
 
   for (const user of seedUsers) {
+    // Non-destructive upsert: preserve existing user password hashes across redeployments.
     const upserted = await prisma.user.upsert({
       where: { email: user.email },
       update: {
         name: user.name,
         role: user.role,
         department: user.department,
-        passwordHash: user.passwordHash,
       },
       create: user,
     });
-    console.log(`✓ Seeded user: ${upserted.email} [${upserted.role}] (${upserted.department})`);
+    console.log(`Seeded user: ${upserted.email} [${upserted.role}] (${upserted.department})`);
   }
 
   console.log('Seeding completed successfully.');
@@ -65,4 +75,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

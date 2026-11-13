@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getSessionUserFromRequest } from '@/lib/auth';
+import { getSessionUserFromRequest, shouldUseSecureCookie } from '@/lib/auth';
 import { jsonSuccess, jsonError } from '@/lib/api-response';
 
 export async function POST(req: NextRequest) {
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     name: 'expense_session',
     value: '',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: shouldUseSecureCookie(),
     sameSite: 'lax',
     path: '/',
     maxAge: 0,

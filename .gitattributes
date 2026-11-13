@@ -1,0 +1,3 @@
+# Ensure Linux shell scripts retain LF line endings on Windows clones
+*.sh text eol=lf
+

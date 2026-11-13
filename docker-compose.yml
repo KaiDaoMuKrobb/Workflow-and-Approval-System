@@ -1,19 +1,59 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: expenseflow-postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: expenseflow
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-expenseflow}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-expenseflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: expenseflow-migrate
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-expenseflow}?schema=public
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-}
+    command: ["sh", "-c", "npx prisma migrate deploy && npm run db:seed"]
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: expenseflow-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      TZ: Asia/Bangkok
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-expenseflow}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-replace-with-a-secure-secret-in-production}
+    ports:
+      - "3000:3000"
 
 volumes:
   postgres_data:
-

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { comparePassword, signToken, TokenPayload } from '@/lib/auth';
+import { comparePassword, signToken, shouldUseSecureCookie, TokenPayload } from '@/lib/auth';
 import { jsonSuccess, jsonError } from '@/lib/api-response';
 
 export async function POST(req: NextRequest) {
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       name: 'expense_session',
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: shouldUseSecureCookie(),
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24, // 1 day
