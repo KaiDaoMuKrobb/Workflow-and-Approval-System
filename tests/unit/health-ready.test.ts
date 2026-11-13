@@ -23,7 +23,7 @@ describe('Health and Readiness Endpoints (Lab 5)', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.status).toBe('ok');
+    expect(body.status).toBe('broken-for-c02-proof');
   });
 
   it('GET /api/ready returns 200 with db connected when database query succeeds', async () => {
