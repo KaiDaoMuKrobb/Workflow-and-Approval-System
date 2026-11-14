@@ -51,4 +51,12 @@ describe('Health and Readiness Endpoints (Lab 5)', () => {
       consoleSpy.mockRestore();
     }
   });
+
+  // DELIBERATE FAILURE. This branch exists only to show that the protect-main
+  // ruleset blocks a merge while the required check `test-and-docker` is red,
+  // which is criterion C-02. The pull request is closed without merging and the
+  // branch is deleted once the screenshot is taken. Nothing here is a real test.
+  it('DELIBERATE FAILURE: proves the required check blocks the merge (C-02)', () => {
+    expect(1).toBe(2);
+  });
 });
