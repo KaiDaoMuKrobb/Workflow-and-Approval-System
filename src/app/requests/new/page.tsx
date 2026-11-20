@@ -131,6 +131,10 @@ function NewRequestForm() {
         setError(`Line item #${i + 1} must have a positive amount greater than zero.`);
         return false;
       }
+      if (amt > 100000) {
+        setError(`Line item #${i + 1} amount cannot exceed 100,000 THB.`);
+        return false;
+      }
     }
     return true;
   };
