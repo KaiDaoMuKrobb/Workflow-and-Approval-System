@@ -4,6 +4,7 @@ import { getSessionUserFromRequest } from '@/lib/auth';
 import { jsonSuccess, jsonError } from '@/lib/api-response';
 import { canViewRequest } from '@/lib/authorization';
 import { Prisma, RequestStatus } from '@prisma/client';
+import { MAX_SINGLE_ITEM_AMOUNT, SINGLE_ITEM_CAP_MESSAGE } from '@/lib/review-rules';
 
 export const dynamic = 'force-dynamic';
 
@@ -133,6 +134,10 @@ export async function PUT(
 
         if (decimalAmount.lte(0)) {
           return jsonError('Line item amount must be strictly greater than zero', 'VALIDATION_ERROR', 400);
+        }
+
+        if (decimalAmount.gt(MAX_SINGLE_ITEM_AMOUNT)) {
+          return jsonError(SINGLE_ITEM_CAP_MESSAGE, 'VALIDATION_ERROR', 400);
         }
 
         calculatedTotal = calculatedTotal.plus(decimalAmount);

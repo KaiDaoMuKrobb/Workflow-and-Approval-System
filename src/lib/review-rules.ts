@@ -14,3 +14,13 @@ export const MIN_DECISION_COMMENT_LENGTH = 5;
 
 export const DECISION_COMMENT_REQUIRED_MESSAGE =
   `A reason of at least ${MIN_DECISION_COMMENT_LENGTH} characters is required to decide a request`;
+
+/**
+ * Single line item upper boundary constraint (Handout §3.5 Controlled Defect Exercise).
+ * Individual line items cannot exceed 100,000.00 THB under anti-fraud corporate governance.
+ */
+export const MAX_SINGLE_ITEM_AMOUNT = 100000;
+
+export const SINGLE_ITEM_CAP_MESSAGE =
+  'Single item amount cannot exceed 100,000 THB.';
+
