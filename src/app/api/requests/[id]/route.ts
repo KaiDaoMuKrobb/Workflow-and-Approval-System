@@ -4,7 +4,7 @@ import { getSessionUserFromRequest } from '@/lib/auth';
 import { jsonSuccess, jsonError } from '@/lib/api-response';
 import { canViewRequest } from '@/lib/authorization';
 import { Prisma, RequestStatus } from '@prisma/client';
-import { MAX_SINGLE_ITEM_AMOUNT } from '@/lib/review-rules';
+import { MAX_SINGLE_ITEM_AMOUNT, SINGLE_ITEM_CAP_MESSAGE } from '@/lib/review-rules';
 
 export const dynamic = 'force-dynamic';
 
@@ -137,7 +137,7 @@ export async function PUT(
         }
 
         if (decimalAmount.gt(MAX_SINGLE_ITEM_AMOUNT)) {
-          return jsonError('Single item amount cannot exceed 100,000 THB', 'VALIDATION_ERROR', 400);
+          return jsonError(SINGLE_ITEM_CAP_MESSAGE, 'VALIDATION_ERROR', 400);
         }
 
         calculatedTotal = calculatedTotal.plus(decimalAmount);

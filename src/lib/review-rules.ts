@@ -21,14 +21,6 @@ export const DECISION_COMMENT_REQUIRED_MESSAGE =
  */
 export const MAX_SINGLE_ITEM_AMOUNT = 100000;
 
-export function validateItemAmount(amount: number | string): { valid: boolean; error?: string } {
-  const num = typeof amount === 'number' ? amount : parseFloat(amount);
-  if (isNaN(num) || num <= 0) {
-    return { valid: false, error: 'Line item amount must be strictly greater than zero.' };
-  }
-  if (num > MAX_SINGLE_ITEM_AMOUNT) {
-    return { valid: false, error: 'Single item amount cannot exceed 100,000 THB.' };
-  }
-  return { valid: true };
-}
+export const SINGLE_ITEM_CAP_MESSAGE =
+  'Single item amount cannot exceed 100,000 THB.';
 

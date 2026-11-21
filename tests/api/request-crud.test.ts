@@ -160,6 +160,130 @@ describe('Feature F-02: Expense Request & Line Items Management', () => {
     expect(body.error.message).toContain('greater than zero');
   });
 
+  // --- Handout §3.5 Controlled Defect Exercise: DEF-CONTROLLED-BOUNDARY-01 ---
+  it('TEST-EX-01: rejects request when single line item exceeds 100,000 THB (RED evidence)', async () => {
+    const payload = {
+      title: 'High-value Capital Purchase',
+      description: 'Single item exceeds anti-fraud boundary',
+      items: [
+        { category: 'EQUIPMENT', description: 'Server Hardware', amount: 150000.00 },
+      ],
+    };
+
+    const req = new NextRequest('http://localhost:3000/api/requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: aliceCookie,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const res = await createRequestHandler(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error.code).toBe('VALIDATION_ERROR');
+    expect(body.error.message).toBe('Single item amount cannot exceed 100,000 THB.');
+  });
+
+  it('TEST-EX-02: rejects update when modified line item exceeds 100,000 THB (RED evidence)', async () => {
+    // 1. Create a valid draft with 300.00 THB
+    const createReq = new NextRequest('http://localhost:3000/api/requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: aliceCookie,
+      },
+      body: JSON.stringify({
+        title: 'Initial Valid Draft',
+        description: 'Draft before modification',
+        items: [{ category: 'OFFICE_SUPPLIES', description: 'Stationery', amount: 300.00 }],
+      }),
+    });
+    const createRes = await createRequestHandler(createReq);
+    const createBody = await createRes.json();
+    const requestId = createBody.data.request.id;
+
+    // 2. Attempt to update line item to 150000.00 THB
+    const updateReq = new NextRequest(`http://localhost:3000/api/requests/${requestId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: aliceCookie,
+      },
+      body: JSON.stringify({
+        title: 'Initial Valid Draft',
+        description: 'Attempted escalation',
+        items: [{ category: 'OFFICE_SUPPLIES', description: 'Upgraded Equipment', amount: 150000.00 }],
+      }),
+    });
+
+    const updateRes = await updateRequestHandler(updateReq, { params: { id: requestId } });
+    const updateBody = await updateRes.json();
+
+    expect(updateRes.status).toBe(400);
+    expect(updateBody.success).toBe(false);
+    expect(updateBody.error.code).toBe('VALIDATION_ERROR');
+    expect(updateBody.error.message).toBe('Single item amount cannot exceed 100,000 THB.');
+  });
+
+  it('TEST-EX-03: accepts single line item exactly at boundary limit of 100,000.00 THB', async () => {
+    const payload = {
+      title: 'Exact Boundary Expenditure',
+      description: 'Single item exactly at maximum permissible limit',
+      items: [
+        { category: 'EQUIPMENT', description: 'Workstation Laptop', amount: 100000.00 },
+      ],
+    };
+
+    const req = new NextRequest('http://localhost:3000/api/requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: aliceCookie,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const res = await createRequestHandler(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(201);
+    expect(body.success).toBe(true);
+    expect(body.data.request.totalAmount).toBe('100000.00');
+    expect(body.data.request.items[0].amount).toBe('100000.00');
+  });
+
+  it('TEST-EX-04: accepts multiple line items whose sum exceeds 100,000 THB as limit is per item', async () => {
+    const payload = {
+      title: 'Multi-item Aggregated Project Claim',
+      description: 'Two items of 60,000 THB each totalling 120,000 THB',
+      items: [
+        { category: 'EQUIPMENT', description: 'Part A', amount: 60000.00 },
+        { category: 'EQUIPMENT', description: 'Part B', amount: 60000.00 },
+      ],
+    };
+
+    const req = new NextRequest('http://localhost:3000/api/requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: aliceCookie,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const res = await createRequestHandler(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(201);
+    expect(body.success).toBe(true);
+    expect(body.data.request.totalAmount).toBe('120000.00');
+    expect(body.data.request.items).toHaveLength(2);
+  });
+
   it('TEST-12 / AC-12: server-calculated total exactly matches sum with Decimal precision (BR-04)', async () => {
     const payload = {
       title: 'Precision Decimal Test',

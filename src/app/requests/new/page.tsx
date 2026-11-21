@@ -12,6 +12,7 @@ import {
   Send,
   Receipt,
 } from 'lucide-react';
+import { MAX_SINGLE_ITEM_AMOUNT, SINGLE_ITEM_CAP_MESSAGE } from '@/lib/review-rules';
 
 interface LineItem {
   id?: string;
@@ -131,8 +132,8 @@ function NewRequestForm() {
         setError(`Line item #${i + 1} must have a positive amount greater than zero.`);
         return false;
       }
-      if (amt > 100000) {
-        setError(`Line item #${i + 1} amount cannot exceed 100,000 THB.`);
+      if (amt > MAX_SINGLE_ITEM_AMOUNT) {
+        setError(SINGLE_ITEM_CAP_MESSAGE);
         return false;
       }
     }
