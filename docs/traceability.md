@@ -80,7 +80,7 @@ reserved in the team agreement §9.2 and never change once allocated.
 | :--- | :--- | :--- | :--- | :--- |
 | `FR-06`, `BR-07`, `BR-08` | Return and resubmission | `F-05` | 2 | `planned` |
 | `FR-07`, `BR-09` | Second approval stage | `F-06` | 2 | `planned` |
-| `FR-08` | Search, filter and paging | `F-07` | 2 | `planned` |
+| `FR-08` | Search, filter and paging | `F-07` | 2 | `in progress` — contract specified in `docs/sprints/sprint-2/F-07-search-filter.md`; `AC-70` .. `AC-77` mapped to `TEST-70` .. `TEST-77` |
 | `FR-09` | Department summaries and analytics | `F-08` | 3 | `planned` |
 | `FR-10`, `BR-10` | Financial report export | `F-09` | 3 | `planned` |
 | — | Hardening and regression | `F-10` | 3 | `planned` |
