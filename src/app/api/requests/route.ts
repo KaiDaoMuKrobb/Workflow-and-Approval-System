@@ -15,37 +15,145 @@ export async function GET(req: NextRequest) {
       return jsonError('Authentication required', 'UNAUTHENTICATED', 401);
     }
 
-    // Role-adaptive visibility: Requesters see only their own requests
-    // Reviewers see assigned requests AND their own requests
-    let whereClause: Prisma.ExpenseRequestWhereInput = {
-      requesterId: sessionUser.id,
-    };
+    // Parse query parameters
+    const searchParams = req.nextUrl.searchParams;
+    const search = searchParams.get('search');
+    const status = searchParams.get('status');
+    const category = searchParams.get('category');
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    const page = searchParams.get('page');
+    const pageSize = searchParams.get('pageSize');
 
-    if (sessionUser.role === 'REVIEWER') {
-      whereClause = {
-        OR: [
-          { requesterId: sessionUser.id },
-          { assignedReviewerId: sessionUser.id },
-        ],
-      };
+    // Validation: status
+    const validStatuses = Object.values(RequestStatus);
+    if (status && !validStatuses.includes(status as RequestStatus)) {
+      return jsonError(
+        'Invalid query parameters: status must be a recognized RequestStatus',
+        'VALIDATION_ERROR',
+        400
+      );
     }
 
-    const requests = await prisma.expenseRequest.findMany({
-      where: whereClause,
-      include: {
-        items: true,
-        requester: {
-          select: { id: true, name: true, email: true, department: true },
+    // Validation: date range
+    let fromDate: Date | undefined;
+    let toDate: Date | undefined;
+    if (from) {
+      const parsedFrom = new Date(from.includes('T') ? from : `${from}T00:00:00.000Z`);
+      if (isNaN(parsedFrom.getTime())) {
+        return jsonError('Invalid query parameters: malformed date filter', 'VALIDATION_ERROR', 400);
+      }
+      fromDate = parsedFrom;
+    }
+    if (to) {
+      const parsedTo = new Date(to.includes('T') ? to : `${to}T23:59:59.999Z`);
+      if (isNaN(parsedTo.getTime())) {
+        return jsonError('Invalid query parameters: malformed date filter', 'VALIDATION_ERROR', 400);
+      }
+      toDate = parsedTo;
+    }
+    if (fromDate && toDate && fromDate > toDate) {
+      return jsonError(
+        'Invalid query parameters: "from" date must be earlier than or equal to "to" date',
+        'VALIDATION_ERROR',
+        400
+      );
+    }
+
+    // Pagination bounds
+    let pageNum = 1;
+    let pageSizeNum = 10;
+    if (page) {
+      const parsedPage = parseInt(page, 10);
+      if (!isNaN(parsedPage) && parsedPage >= 1) {
+        pageNum = parsedPage;
+      }
+    }
+    if (pageSize) {
+      const parsedPageSize = parseInt(pageSize, 10);
+      if (!isNaN(parsedPageSize) && parsedPageSize >= 1) {
+        pageSizeNum = Math.min(parsedPageSize, 100);
+      }
+    }
+
+    // Role-adaptive visibility: Requesters see only their own requests (BR-05)
+    // Reviewers see assigned requests AND their own requests
+    const baseVisibility: Prisma.ExpenseRequestWhereInput =
+      sessionUser.role === 'REVIEWER'
+        ? {
+            OR: [
+              { requesterId: sessionUser.id },
+              { assignedReviewerId: sessionUser.id },
+            ],
+          }
+        : {
+            requesterId: sessionUser.id,
+          };
+
+    const andConditions: Prisma.ExpenseRequestWhereInput[] = [baseVisibility];
+
+    if (status) {
+      andConditions.push({ status: status as RequestStatus });
+    }
+
+    if (category && category.trim()) {
+      andConditions.push({
+        items: {
+          some: {
+            category: {
+              equals: category.trim(),
+              mode: 'insensitive',
+            },
+          },
         },
-        assignedReviewer: {
-          select: { id: true, name: true, email: true },
+      });
+    }
+
+    if (fromDate || toDate) {
+      const createdAtFilter: Prisma.DateTimeFilter = {};
+      if (fromDate) createdAtFilter.gte = fromDate;
+      if (toDate) createdAtFilter.lte = toDate;
+      andConditions.push({ createdAt: createdAtFilter });
+    }
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      andConditions.push({
+        OR: [
+          { title: { contains: term, mode: 'insensitive' } },
+          { description: { contains: term, mode: 'insensitive' } },
+          { requestNumber: { contains: term, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    const whereClause: Prisma.ExpenseRequestWhereInput = {
+      AND: andConditions,
+    };
+
+    const [requests, totalCount] = await Promise.all([
+      prisma.expenseRequest.findMany({
+        where: whereClause,
+        include: {
+          items: true,
+          requester: {
+            select: { id: true, name: true, email: true, department: true },
+          },
+          assignedReviewer: {
+            select: { id: true, name: true, email: true },
+          },
+          history: {
+            orderBy: { createdAt: 'desc' },
+          },
         },
-        history: {
-          orderBy: { createdAt: 'desc' },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip: (pageNum - 1) * pageSizeNum,
+        take: pageSizeNum,
+      }),
+      prisma.expenseRequest.count({
+        where: whereClause,
+      }),
+    ]);
 
     const serializedRequests = requests.map((r) => ({
       ...r,
@@ -56,7 +164,18 @@ export async function GET(req: NextRequest) {
       })),
     }));
 
-    return jsonSuccess({ requests: serializedRequests }, 200);
+    return jsonSuccess(
+      {
+        requests: serializedRequests,
+        pagination: {
+          page: pageNum,
+          pageSize: pageSizeNum,
+          totalCount,
+          totalPages: Math.ceil(totalCount / pageSizeNum),
+        },
+      },
+      200
+    );
   } catch (error) {
     console.error('List requests error:', error);
     return jsonError('Internal server error', 'INTERNAL_ERROR', 500);
