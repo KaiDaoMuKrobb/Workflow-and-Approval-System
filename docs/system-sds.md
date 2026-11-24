@@ -5,6 +5,7 @@
 **Document Status:** Approved Baseline (Sprint 1)  
 **Author / Maintainer:** KaiDaoMuKrobb  
 **Reviewer:** siripitch-c  
+**Revisions:** `DEC-02` revised to v2.0 on 24 November 2026 under Issue #39, approved by the course TA before implementation. Sections 3.2, 4.2 and 4.3 carry the revision  
 
 ---
 
@@ -161,7 +162,7 @@ flowchart LR
 > `POST /api/requests/:id/review` (`SR-05`).
 
 ### 3.2 Shared UI Behaviors & States
-- **Validation State:** Client forms provide immediate visual validation (e.g., negative amounts highlight red, missing reviewer disables submit).
+- **Validation State:** Client forms provide immediate visual validation (e.g., negative amounts highlight red, missing reviewer disables submit). Under `DEC-02` v2.0 the reviewer list excludes the signed-in user's own account and a note states that a request cannot be assigned to oneself (`AC-18e`).
 - **Loading State:** Form buttons transition to disabled spinner states upon submission to prevent accidental duplicate clicks.
 - **Empty State:** Lists with zero items render an informative illustration and a primary call-to-action button (*"No expense requests found"*).
 - **Error Feedback:** Server error responses (such as 403 `SELF_APPROVAL`) trigger an accessible top-level alert banner explaining the exact violation.
@@ -209,6 +210,7 @@ Every route handler executes an invariant 4-tier evaluation pipeline before acce
           ▼
 4. Domain State Machine Guard ──(Illegal state transition)───> 400 INVALID_TRANSITION
                               ──(Edit submitted request)────> 400 IMMUTABLE_AFTER_SUBMIT
+                              ──(Self-assignment at submit)──> 400 SELF_ASSIGNMENT
                               ──(Invalid item/zero amount)───> 400 VALIDATION_ERROR
                               ──(Invalid login credentials)──> 400 INVALID_CREDENTIALS
           │
@@ -224,6 +226,7 @@ Every route handler executes an invariant 4-tier evaluation pipeline before acce
 | `NOT_FOUND` | Resource not found or requester has no permission to know it exists | 404 | `BR-05`, `DEC-03` |
 | `FORBIDDEN` | Authenticated but unauthorized to perform this action | 403 | `BR-05` |
 | `SELF_APPROVAL` | Reviewer attempting to decide on their own submitted request | 403 | `BR-01`, `DEC-02` |
+| `SELF_ASSIGNMENT` | Requester selecting themselves as the assigned reviewer at submission | 400 | `DEC-02` v2.0 |
 | `INVALID_TRANSITION` | Disallowed state machine transition attempt | 400 | `BR-02` |
 | `IMMUTABLE_AFTER_SUBMIT` | Attempting to modify a request after submission | 400 | `BR-03` |
 | `VALIDATION_ERROR` | Missing required fields, zero/negative line item amount | 400 | `BR-04` |
