@@ -5,6 +5,7 @@
 **Document Status:** Approved Baseline (Sprints 1–3)  
 **Author / Maintainer:** KaiDaoMuKrobb  
 **Reviewer:** siripitch-c  
+**Revisions:** `DEC-02` revised to v2.0 on 24 November 2026 under Issue #39, approved by the course TA before implementation. Sections 6 and 8 carry the revision  
 
 ---
 
@@ -92,7 +93,7 @@ All business rules are enforced exclusively at the **Application / Server Layer 
 
 ### Sprint 1 Rules
 - **`BR-01 (Self-Approval Prevention)`**:  
-  A reviewer is **strictly forbidden from approving or rejecting their own expense request**. If `request.requesterId == currentUserId`, the server must reject the operation with **HTTP 403 Forbidden** and error code `SELF_APPROVAL` (`DEC-02`).
+  A reviewer is **strictly forbidden from approving or rejecting their own expense request**. If `request.requesterId == currentUserId`, the server must reject the operation with **HTTP 403 Forbidden** and error code `SELF_APPROVAL` (`DEC-02`). Since `DEC-02` v2.0 the submit endpoint also refuses self-assignment with HTTP 400, so this guard is the second of two layers; it is retained unchanged.
 - **`BR-02 (State Transition Validation)`**:  
   Status changes must strictly follow the defined state machine:
   $$\text{DRAFT} \longleftrightarrow \text{SUBMITTED} \longrightarrow \text{APPROVED} \mid \text{REJECTED}$$
@@ -139,7 +140,7 @@ All business rules are enforced exclusively at the **Application / Server Layer 
 | ID | Design Decision | Alternative Considered | Rationale & Trade-off Resolution |
 | :--- | :--- | :--- | :--- |
 | **`DEC-01`** | Adopt **PostgreSQL** as primary database from Day 1 | SQLite | CPE 334 Lab 5 requires containerized GCP deployment with durable persistence surviving container restarts. SQLite on Cloud Run ephemeral storage violates this criterion. |
-| **`DEC-02`** | Allow self-assignment at submit, but enforce **rejection with 403 Forbidden at review boundary** | Block self-selection at submit time (400) | Blocking at submit prevents creating a testable state where `requesterId == assignedReviewerId`. Allowing it verifies backend authorization enforcement (`BR-01`) directly and decouples submission from reviewer validation. |
+| **`DEC-02`** (revised, v2.0) | **Refuse self-assignment at submit time** with HTTP 400 and code `SELF_ASSIGNMENT`, and retain the 403 `SELF_APPROVAL` guard at the review boundary as a second layer | Keep allowing it at submit and refuse only at the review boundary, as v1.0 decided | The v1.0 rationale no longer holds. The Lab 6 independent UAT recorded limitation `K-2`: a self-assigned claim can never be decided, because `BR-01` blocks the owner, `AC-33` blocks every other reviewer and `BR-03` makes the claim immutable, so it stays `SUBMITTED` permanently. The `BR-01` path stays fully testable because `TEST-31` builds its fixture through Prisma rather than the submit endpoint. Approved by the course TA on 24 Nov 2026; raised as Issue #39. |
 | **`DEC-03`** | Return **HTTP 404 Not Found** for unauthorized resource viewing | Return HTTP 403 Forbidden | Returning 403 leaks metadata confirming the resource exists, exposing the system to ID enumeration attacks. Returning 404 provides zero-knowledge security. |
 | **`DEC-04`** | Use **`Decimal(12, 2)`** for monetary values instead of `Float` | Float / Double | Standard IEEE-754 floats introduce arithmetic precision errors (e.g. `0.1 + 0.2 = 0.30000000000000004`), causing false test failures in `BR-04` total amount assertions. |
 | **`DEC-05`** | Implement as a **Modular Monolith using Next.js App Router** | Separate Frontend & Backend repositories | Next.js App Router co-locates UI and server-side route handlers in a single repository, sharing TypeScript types cleanly and streamlining Lab 5 container deployment. |

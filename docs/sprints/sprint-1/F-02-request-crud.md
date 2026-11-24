@@ -13,7 +13,7 @@
 `F-02` provides the core requester domain workflow for ExpenseFlow: creating itemized expense claims, managing line items, editing drafts, and submitting requests for managerial review.
 
 1. **Draft Creation (`POST /api/requests`):**  
-   An authenticated user (any role per `DEC-02`) creates an expense reimbursement request in `DRAFT` status. The submission accepts a title, description, and an array of itemized expense items (`category`, `description`, `amount`).
+   An authenticated user of any role creates an expense reimbursement request in `DRAFT` status. The submission accepts a title, description, and an array of itemized expense items (`category`, `description`, `amount`).
    - The server validates line items: every line item must have amount $> 0$ and at least one item must be present (`BR-04`).
    - The server generates an authoritative, sequential request number formatted as `EXP-{YYYY}-{NNNN}` (e.g. `EXP-2026-0001`) with collision prevention (`BR-06`).
    - The server computes the authoritative `totalAmount` by summing line items using PostgreSQL `Decimal(12, 2)`. Any client-provided `totalAmount` is discarded.
@@ -25,8 +25,9 @@
 
 3. **Request Submission (`POST /api/requests/:id/submit`):**  
    The request owner submits the draft to a designated reviewer (`assignedReviewerId`).
-   - Guard order: `401 UNAUTHENTICATED` $\rightarrow$ `404 NOT_FOUND` $\rightarrow$ `400 IMMUTABLE_AFTER_SUBMIT` $\rightarrow$ `400 VALIDATION_ERROR` (if `assignedReviewerId` is missing/nonexistent or request has 0 items).
-   - In accordance with `DEC-02`, assigning self as reviewer (`assignedReviewerId == requesterId`) is permitted at submission to enable downstream verification of `BR-01` (`SELF_APPROVAL`) rejection at review boundary.
+   - Guard order: `401 UNAUTHENTICATED` $\rightarrow$ `404 NOT_FOUND` $\rightarrow$ `400 IMMUTABLE_AFTER_SUBMIT` $\rightarrow$ `400 SELF_ASSIGNMENT` $\rightarrow$ `400 VALIDATION_ERROR` (if `assignedReviewerId` is missing/nonexistent or request has 0 items).
+   - In accordance with `DEC-02` v2.0, assigning self as reviewer (`assignedReviewerId == requesterId`) is **refused** at submission with `400 SELF_ASSIGNMENT`. The request remains in `DRAFT` and no `ApprovalHistory` row is written. The `BR-01` (`SELF_APPROVAL`, HTTP 403) guard at the review boundary is retained unchanged as a second layer.
+   - Within the `400` band the self-assignment check runs **before** the reviewer-role check of `AC-18b`, so a `REQUESTER` who selects themselves receives `SELF_ASSIGNMENT` rather than `VALIDATION_ERROR`. The newer and more specific rule names itself, for the same reason `DEC-06` fixes the order of the two `403` guards in `F-04`.
    - On successful submission, the request status transitions from `DRAFT` to `SUBMITTED`, locking further edits, and a record is appended to `ApprovalHistory` (`action: 'SUBMIT'`, `fromStatus: 'DRAFT'`, `toStatus: 'SUBMITTED'`).
 
 4. **Requester Dashboard & Overview (`GET /api/requests`):**  
@@ -38,7 +39,7 @@
 - **`BR-03`**: Immutability After Submission (`IMMUTABLE_AFTER_SUBMIT`, HTTP 400).
 - **`BR-04`**: Authoritative Amount Calculation & Line Item Validation (`VALIDATION_ERROR`, HTTP 400; amount $> 0$, items $\ge 1$).
 - **`BR-06`**: Sequential Request Number Format `EXP-{YYYY}-{NNNN}`.
-- **`DEC-02`**: Self-assignment allowed at submit time (checked later at review boundary `BR-01`).
+- **`DEC-02`** (v2.0): Self-assignment refused at submit time (`SELF_ASSIGNMENT`, HTTP 400); the `BR-01` guard at the review boundary is retained as a second layer.
 - **`DEC-03`**: Return HTTP 404 Not Found for unauthorized resource access attempts.
 - **`DEC-04`**: Use `Decimal(12, 2)` monetary handling to avoid floating-point rounding errors.
 - **`DEC-06`**: Invariant guard order: `401` $\rightarrow$ `404` $\rightarrow$ `403` $\rightarrow$ `400`.
@@ -137,6 +138,7 @@
   - `401 Unauthorized`: code `UNAUTHENTICATED`
   - `404 Not Found`: code `NOT_FOUND` (if request not found or caller not owner)
   - `400 Bad Request`: code `IMMUTABLE_AFTER_SUBMIT` (if status already `SUBMITTED`, `APPROVED`, or `REJECTED`)
+  - `400 Bad Request`: code `SELF_ASSIGNMENT` (if `assignedReviewerId == requesterId`, per `DEC-02` v2.0)
   - `400 Bad Request`: code `VALIDATION_ERROR` (if `assignedReviewerId` missing, reviewer not found, or items count $< 1$)
 
 ---
@@ -183,10 +185,10 @@
   *When* `POST /api/requests/:id/submit` is invoked without `assignedReviewerId` or with an invalid reviewer ID  
   *Then* server rejects with HTTP 400 and error code `VALIDATION_ERROR`.
 
-- **`AC-18` (Self-Assignment Permitted at Submit - DEC-02):**  
-  *Given* a reviewer submitting their own expense request  
+- **`AC-18` (Self-Assignment Refused at Submit - DEC-02 v2.0):**  
+  *Given* an authenticated owner with a `DRAFT` request holding at least one line item  
   *When* `POST /api/requests/:id/submit` specifies their own `id` as `assignedReviewerId`  
-  *Then* submission succeeds with HTTP 200 (rejection is deferred to review boundary `BR-01` in F-04).
+  *Then* server rejects with HTTP 400 and error code `SELF_ASSIGNMENT`, the status remains `DRAFT`, and no `ApprovalHistory` row is written.
 
 - **`AC-18b` (Assigned Reviewer Role Enforcement - SR-05):**  
   *Given* a draft request ready for submission  
@@ -197,6 +199,16 @@
   *Given* an authenticated user querying reviewer candidates  
   *When* `GET /api/reviewers` is invoked  
   *Then* response contains only users holding `role: REVIEWER` (e.g. Carol, David) and excludes non-reviewer accounts (e.g. Alice, Bob).
+
+- **`AC-18d` (Submission to a Different Reviewer Unaffected):**  
+  *Given* the same `DRAFT` request  
+  *When* `POST /api/requests/:id/submit` specifies a different account holding `Role.REVIEWER`  
+  *Then* submission succeeds with HTTP 200 and the status becomes `SUBMITTED`.
+
+- **`AC-18e` (Submission Form Prevents the Selection):**  
+  *Given* a reviewer creating their own expense request  
+  *When* the reviewer list is shown on the submission form  
+  *Then* their own account cannot be selected and a visible message states why.
 
 - **`AC-19` (Requester Personal Requests Query):**  
   *Given* an authenticated user with requests in the system  
@@ -225,9 +237,10 @@
 | **`TEST-15`** | `AC-15` | Integration | Submitted request owned by Alice | `PUT /api/requests/:id` on submitted request | HTTP 400, `IMMUTABLE_AFTER_SUBMIT` |
 | **`TEST-16`** | `AC-16` | Integration | Draft with items, valid Carol reviewer ID | `POST /api/requests/:id/submit` | HTTP 200, status `SUBMITTED`, `ApprovalHistory` logged |
 | **`TEST-17`** | `AC-17` | Integration | Draft with items | `POST /api/requests/:id/submit` without reviewer ID | HTTP 400, `VALIDATION_ERROR` |
-| **`TEST-18`** | `AC-18` | Integration | Reviewer David submitting request | `POST /api/requests/:id/submit` with `assignedReviewerId: david.id` | HTTP 200, status `SUBMITTED`, reviewer set to self (`DEC-02`) |
+| **`TEST-18`** | `AC-18` | Integration | Reviewer David owns a `DRAFT` request with one line item | `POST /api/requests/:id/submit` with `assignedReviewerId: david.id` | HTTP 400, `SELF_ASSIGNMENT`, status stays `DRAFT`, no `ApprovalHistory` row (`DEC-02` v2.0) |
 | **`TEST-18b`** | `AC-18b` | Integration | Draft with items, Bob's ID (`Role.REQUESTER`) | `POST /api/requests/:id/submit` with Bob's ID | HTTP 400, `VALIDATION_ERROR` (`Assigned reviewer must hold REVIEWER role`) |
 | **`TEST-18c`** | `AC-18c` | Integration | Authenticated requester | `GET /api/reviewers` | HTTP 200, returns Carol & David, excludes Alice & Bob |
+| **`TEST-18d`** | `AC-18d` | Integration | The same `DRAFT` request; Carol holds `Role.REVIEWER` | `POST /api/requests/:id/submit` with `assignedReviewerId: carol.id` | HTTP 200, status `SUBMITTED`, `ApprovalHistory` logged |
 | **`TEST-19`** | `AC-19` | Integration | Alice has 2 requests, Bob has 1 request | `GET /api/requests` as Alice | HTTP 200, returns exactly Alice's 2 requests |
 | **`TEST-19b`** | `AC-19b` | Integration | Reviewer David with decided request (`APPROVED`) | `GET /api/requests` as David | HTTP 200, includes the approved request (does not vanish) |
 | **`TEST-E2E-01`** | `E2E-01` | E2E (UI) | Seeded Alice and Carol | Playwright: Login Alice $\rightarrow$ Create Draft $\rightarrow$ Add 2 items $\rightarrow$ Submit to Carol $\rightarrow$ Assert `SUBMITTED` | Browser test passes cleanly |
@@ -252,3 +265,4 @@
 | :--- | :--- | :--- | :--- |
 | 1.0 | 4 Nov 2026 | Contract written: feature SDS, API specifications, AC-10..AC-19, STS and Definition of Done (85b730f) | Written before implementation, as Part E requires |
 | 1.1 | 5 Nov 2026 | AC-18b and AC-18c added for reviewer role enforcement; AC-19b added for reviewer visibility of decided requests; TEST-10b added for concurrent number allocation; seed prerequisite recorded in the STS (a7dc6a0) | Peer review found GET /api/reviewers returned every account including emails, that a request could be assigned to a non-reviewer, and that the request number could be issued twice under concurrency |
+| 2.0 | 24 Nov 2026 | `DEC-02` revised: self-assignment refused at submit with `SELF_ASSIGNMENT` (HTTP 400). `AC-18` rewritten; `AC-18d` and `AC-18e` added; `TEST-18` rewritten and `TEST-18d` added; the guard order in §1.1 and the error responses in §2.1 record the new code and its precedence within the 400 band | Lab 6 independent UAT recorded limitation `K-2`: a self-assigned claim can never be decided and remains `SUBMITTED` permanently. The change was approved by the course TA on 24 Nov 2026 and raised as Issue #39. This contract was revised and reviewed before any code was written |
