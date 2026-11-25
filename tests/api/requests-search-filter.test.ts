@@ -27,6 +27,14 @@ describe('Feature F-07: Multi-criteria Filtering, Search & Pagination (FR-08)', 
   const createdRequestIds: string[] = [];
 
   beforeAll(async () => {
+    // Clean up any stale fixtures from interrupted previous runs
+    await prisma.expenseItem.deleteMany({
+      where: { request: { requestNumber: { startsWith: 'EXP-2026-70' } } },
+    });
+    await prisma.expenseRequest.deleteMany({
+      where: { requestNumber: { startsWith: 'EXP-2026-70' } },
+    });
+
     const [alice, bob, carol, david] = await Promise.all([
       prisma.user.findUnique({ where: { email: 'alice.req@test.com' } }),
       prisma.user.findUnique({ where: { email: 'bob.req@test.com' } }),
@@ -251,23 +259,52 @@ describe('Feature F-07: Multi-criteria Filtering, Search & Pagination (FR-08)', 
     expect(bodyNum.data.requests[0].title).toContain('Team Building');
   });
 
-  it('TEST-74 / AC-74: returns sliced records and pagination metadata', async () => {
-    const req = new NextRequest('http://localhost:3000/api/requests?page=1&pageSize=2', {
+  it('TEST-74 / AC-74: returns sliced records across pages and enforces pagination metadata and bounds', async () => {
+    // 1. Page 1, pageSize 2
+    const req1 = new NextRequest('http://localhost:3000/api/requests?page=1&pageSize=2', {
       method: 'GET',
       headers: { cookie: aliceCookie },
     });
+    const res1 = await listRequestsHandler(req1);
+    const body1 = await res1.json();
 
-    const res = await listRequestsHandler(req);
-    const body = await res.json();
+    expect(res1.status).toBe(200);
+    expect(body1.success).toBe(true);
+    expect(body1.data.requests).toHaveLength(2);
+    expect(body1.data.pagination.page).toBe(1);
+    expect(body1.data.pagination.pageSize).toBe(2);
+    expect(body1.data.pagination.totalCount).toBeGreaterThanOrEqual(4);
+    expect(body1.data.pagination.totalPages).toBeGreaterThanOrEqual(2);
 
-    expect(res.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.data.requests).toHaveLength(2);
-    expect(body.data.pagination).toBeDefined();
-    expect(body.data.pagination.page).toBe(1);
-    expect(body.data.pagination.pageSize).toBe(2);
-    expect(body.data.pagination.totalCount).toBeGreaterThanOrEqual(4);
-    expect(body.data.pagination.totalPages).toBeGreaterThanOrEqual(2);
+    const page1Ids = body1.data.requests.map((r: any) => r.id);
+
+    // 2. Page 2, pageSize 2 -> exercises skip: (pageNum - 1) * pageSizeNum
+    const req2 = new NextRequest('http://localhost:3000/api/requests?page=2&pageSize=2', {
+      method: 'GET',
+      headers: { cookie: aliceCookie },
+    });
+    const res2 = await listRequestsHandler(req2);
+    const body2 = await res2.json();
+
+    expect(res2.status).toBe(200);
+    expect(body2.data.requests).toHaveLength(2);
+    expect(body2.data.pagination.page).toBe(2);
+    const page2Ids = body2.data.requests.map((r: any) => r.id);
+
+    // Page 1 and Page 2 slices must not intersect
+    for (const id of page2Ids) {
+      expect(page1Ids).not.toContain(id);
+    }
+
+    // 3. PageSize upper boundary cap: requesting 200 is capped at 100
+    const reqCap = new NextRequest('http://localhost:3000/api/requests?pageSize=200', {
+      method: 'GET',
+      headers: { cookie: aliceCookie },
+    });
+    const resCap = await listRequestsHandler(reqCap);
+    const bodyCap = await resCap.json();
+    expect(resCap.status).toBe(200);
+    expect(bodyCap.data.pagination.pageSize).toBe(100);
   });
 
   it('TEST-75 / AC-75: combines multiple filter and search criteria with AND logic', async () => {
@@ -315,7 +352,29 @@ describe('Feature F-07: Multi-criteria Filtering, Search & Pagination (FR-08)', 
     expect(carolBody.data.requests.some((r: any) => r.requestNumber === 'EXP-2026-7005')).toBe(true);
   });
 
-  it('TEST-77 / AC-77: rejects invalid status or malformed date with HTTP 400 VALIDATION_ERROR', async () => {
+  it('TEST-76b: reviewer review queue endpoint (?queue=true) isolates assigned pending claims without client-side cap', async () => {
+    const req = new NextRequest('http://localhost:3000/api/requests?queue=true', {
+      method: 'GET',
+      headers: { cookie: carolCookie },
+    });
+
+    const res = await listRequestsHandler(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+
+    const numbers = body.data.requests.map((r: any) => r.requestNumber);
+    // Carol is assigned reviewer for req2 (Alice, SUBMITTED) and req5 (Bob, SUBMITTED)
+    expect(numbers).toContain('EXP-2026-7002');
+    expect(numbers).toContain('EXP-2026-7005');
+    // Excludes req1 (DRAFT), req3 (APPROVED), and req4 (REJECTED)
+    expect(numbers).not.toContain('EXP-2026-7001');
+    expect(numbers).not.toContain('EXP-2026-7003');
+    expect(numbers).not.toContain('EXP-2026-7004');
+  });
+
+  it('TEST-78: rejects invalid query parameters with HTTP 400 VALIDATION_ERROR', async () => {
     // 1. Invalid status
     const reqStatus = new NextRequest('http://localhost:3000/api/requests?status=BOGUS_STATUS', {
       method: 'GET',
@@ -323,21 +382,83 @@ describe('Feature F-07: Multi-criteria Filtering, Search & Pagination (FR-08)', 
     });
     const resStatus = await listRequestsHandler(reqStatus);
     const bodyStatus = await resStatus.json();
-
     expect(resStatus.status).toBe(400);
-    expect(bodyStatus.success).toBe(false);
     expect(bodyStatus.error.code).toBe('VALIDATION_ERROR');
 
-    // 2. Malformed from date
+    // 2. Invalid category (unrecognized)
+    const reqCat = new NextRequest('http://localhost:3000/api/requests?category=NONSENSE', {
+      method: 'GET',
+      headers: { cookie: aliceCookie },
+    });
+    const resCat = await listRequestsHandler(reqCat);
+    const bodyCat = await resCat.json();
+    expect(resCat.status).toBe(400);
+    expect(bodyCat.error.code).toBe('VALIDATION_ERROR');
+
+    // 3. Malformed date
     const reqDate = new NextRequest('http://localhost:3000/api/requests?from=invalid-date', {
       method: 'GET',
       headers: { cookie: aliceCookie },
     });
     const resDate = await listRequestsHandler(reqDate);
     const bodyDate = await resDate.json();
-
     expect(resDate.status).toBe(400);
-    expect(bodyDate.success).toBe(false);
     expect(bodyDate.error.code).toBe('VALIDATION_ERROR');
+
+    // 4. from date after to date
+    const reqInverted = new NextRequest('http://localhost:3000/api/requests?from=2026-11-20&to=2026-11-01', {
+      method: 'GET',
+      headers: { cookie: aliceCookie },
+    });
+    const resInverted = await listRequestsHandler(reqInverted);
+    const bodyInverted = await resInverted.json();
+    expect(resInverted.status).toBe(400);
+    expect(bodyInverted.error.code).toBe('VALIDATION_ERROR');
+
+    // 5. Invalid page (non-positive or non-integer)
+    const reqPageZero = new NextRequest('http://localhost:3000/api/requests?page=0', {
+      method: 'GET',
+      headers: { cookie: aliceCookie },
+    });
+    const resPageZero = await listRequestsHandler(reqPageZero);
+    expect(resPageZero.status).toBe(400);
+
+    const reqPageAlpha = new NextRequest('http://localhost:3000/api/requests?page=abc', {
+      method: 'GET',
+      headers: { cookie: aliceCookie },
+    });
+    const resPageAlpha = await listRequestsHandler(reqPageAlpha);
+    expect(resPageAlpha.status).toBe(400);
+
+    // 6. Invalid pageSize
+    const reqPageSizeZero = new NextRequest('http://localhost:3000/api/requests?pageSize=-5', {
+      method: 'GET',
+      headers: { cookie: aliceCookie },
+    });
+    const resPageSizeZero = await listRequestsHandler(reqPageSizeZero);
+    expect(resPageSizeZero.status).toBe(400);
+  });
+
+  it('TEST-79 / AC-79 (NFR-03): filtered multi-criteria query responds within 500 ms', async () => {
+    // Warm-up call
+    await listRequestsHandler(
+      new NextRequest('http://localhost:3000/api/requests?status=SUBMITTED&category=EQUIPMENT', {
+        method: 'GET',
+        headers: { cookie: aliceCookie },
+      })
+    );
+
+    const startedAt = performance.now();
+    const res = await listRequestsHandler(
+      new NextRequest('http://localhost:3000/api/requests?status=SUBMITTED&category=EQUIPMENT', {
+        method: 'GET',
+        headers: { cookie: aliceCookie },
+      })
+    );
+    await res.json();
+    const elapsedMs = performance.now() - startedAt;
+
+    expect(res.status).toBe(200);
+    expect(elapsedMs).toBeLessThan(500);
   });
 });
