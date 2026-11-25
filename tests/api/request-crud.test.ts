@@ -521,8 +521,9 @@ describe('Feature F-02: Expense Request & Line Items Management', () => {
     expect(submitBody.error.code).toBe('VALIDATION_ERROR');
   });
 
-  it('TEST-18 / AC-18: self-assignment permitted at submit time (DEC-02)', async () => {
-    // Reviewer David submits an expense request designating himself as reviewer
+  it('TEST-18 / AC-18: self-assignment is refused at submit time with 400 SELF_ASSIGNMENT (DEC-02 v2.0)', async () => {
+    // David holds REVIEWER, so under DEC-02 v1.0 he could assign his own claim to
+    // himself and the refusal was deferred to the decision endpoint under BR-01.
     const createReq = new NextRequest('http://localhost:3000/api/requests', {
       method: 'POST',
       headers: {
@@ -531,7 +532,7 @@ describe('Feature F-02: Expense Request & Line Items Management', () => {
       },
       body: JSON.stringify({
         title: 'David Personal Claim',
-        description: 'Self-assignment test per DEC-02',
+        description: 'Self-assignment refused at submit per DEC-02 v2.0',
         items: [{ category: 'TRAVEL', description: 'Taxi', amount: 150.00 }],
       }),
     });
@@ -552,10 +553,19 @@ describe('Feature F-02: Expense Request & Line Items Management', () => {
     const submitRes = await submitRequestHandler(submitReq, { params: { id: requestId } });
     const submitBody = await submitRes.json();
 
-    expect(submitRes.status).toBe(200);
-    expect(submitBody.success).toBe(true);
-    expect(submitBody.data.request.status).toBe('SUBMITTED');
-    expect(submitBody.data.request.assignedReviewerId).toBe(davidId);
+    expect(submitRes.status).toBe(400);
+    expect(submitBody.success).toBe(false);
+    expect(submitBody.error.code).toBe('SELF_ASSIGNMENT');
+
+    // The claim must be left exactly as it was: no state change, no reviewer and
+    // no history row. The refusal has to happen before anything is written.
+    const after = await prisma.expenseRequest.findUnique({
+      where: { id: requestId },
+      include: { history: true },
+    });
+    expect(after?.status).toBe(RequestStatus.DRAFT);
+    expect(after?.assignedReviewerId).toBeNull();
+    expect(after?.history).toHaveLength(0);
   });
 
   it('TEST-18b: submitting with reviewer who does not hold REVIEWER role returns 400 VALIDATION_ERROR', async () => {
@@ -592,6 +602,51 @@ describe('Feature F-02: Expense Request & Line Items Management', () => {
     expect(submitBody.success).toBe(false);
     expect(submitBody.error.code).toBe('VALIDATION_ERROR');
     expect(submitBody.error.message).toContain('REVIEWER');
+  });
+
+  it('TEST-18d / AC-18d: submitting to a different reviewer still succeeds', async () => {
+    // The preserved behaviour. DEC-02 v2.0 refuses self-assignment only; a normal
+    // submission to another account holding REVIEWER must keep working unchanged.
+    const createReq = new NextRequest('http://localhost:3000/api/requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: davidCookie,
+      },
+      body: JSON.stringify({
+        title: 'David Claim Assigned To Carol',
+        description: 'Preserved behaviour alongside DEC-02 v2.0',
+        items: [{ category: 'TRAVEL', description: 'Taxi', amount: 150.00 }],
+      }),
+    });
+    const createRes = await createRequestHandler(createReq);
+    const createBody = await createRes.json();
+    const requestId = createBody.data.request.id;
+
+    const submitReq = new NextRequest(`http://localhost:3000/api/requests/${requestId}/submit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: davidCookie,
+      },
+      body: JSON.stringify({ assignedReviewerId: carolId }),
+    });
+
+    const submitRes = await submitRequestHandler(submitReq, { params: { id: requestId } });
+    const submitBody = await submitRes.json();
+
+    expect(submitRes.status).toBe(200);
+    expect(submitBody.success).toBe(true);
+    expect(submitBody.data.request.status).toBe('SUBMITTED');
+    expect(submitBody.data.request.assignedReviewerId).toBe(carolId);
+
+    const after = await prisma.expenseRequest.findUnique({
+      where: { id: requestId },
+      include: { history: true },
+    });
+    expect(after?.status).toBe(RequestStatus.SUBMITTED);
+    expect(after?.history).toHaveLength(1);
+    expect(after?.history[0].action).toBe('SUBMIT');
   });
 
   it('TEST-18c: GET /api/reviewers returns only accounts holding REVIEWER role', async () => {
