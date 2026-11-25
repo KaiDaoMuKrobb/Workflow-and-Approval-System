@@ -130,8 +130,9 @@ describe('Feature F-04: Decision guards (AC-31..AC-35, AC-37, AC-38)', () => {
   });
 
   it('TEST-31 / AC-31 (BR-01): nobody decides a request they raised, even assigned to themselves', async () => {
-    // DEC-02 permits self-assignment at submit time, so this request is valid.
-    // BR-01 is enforced here, at the decision boundary.
+    // Since DEC-02 v2.0 the submit endpoint refuses self-assignment, so this
+    // fixture is seeded directly through Prisma. BR-01 is still enforced here,
+    // at the decision boundary, and that is what this test covers.
     const id = await makeRequest({
       requesterId: davidId,
       assignedReviewerId: davidId,
