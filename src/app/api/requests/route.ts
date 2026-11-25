@@ -4,7 +4,11 @@ import { getSessionUserFromRequest } from '@/lib/auth';
 import { jsonSuccess, jsonError } from '@/lib/api-response';
 import { generateNextRequestNumber } from '@/lib/request-number';
 import { Prisma, RequestStatus } from '@prisma/client';
-import { MAX_SINGLE_ITEM_AMOUNT, SINGLE_ITEM_CAP_MESSAGE } from '@/lib/review-rules';
+import {
+  MAX_SINGLE_ITEM_AMOUNT,
+  SINGLE_ITEM_CAP_MESSAGE,
+  VALID_EXPENSE_CATEGORIES,
+} from '@/lib/review-rules';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +28,7 @@ export async function GET(req: NextRequest) {
     const to = searchParams.get('to');
     const page = searchParams.get('page');
     const pageSize = searchParams.get('pageSize');
+    const isQueueView = searchParams.get('queue') === 'true';
 
     // Validation: status
     const validStatuses = Object.values(RequestStatus);
@@ -33,6 +38,18 @@ export async function GET(req: NextRequest) {
         'VALIDATION_ERROR',
         400
       );
+    }
+
+    // Validation: expense category
+    if (category) {
+      const normalizedCat = category.trim().toUpperCase();
+      if (!VALID_EXPENSE_CATEGORIES.includes(normalizedCat as any)) {
+        return jsonError(
+          'Invalid query parameters: category must be a recognized ExpenseCategory',
+          'VALIDATION_ERROR',
+          400
+        );
+      }
     }
 
     // Validation: date range
@@ -60,35 +77,51 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Pagination bounds
+    // Pagination validation: positive integer or default
     let pageNum = 1;
     let pageSizeNum = 10;
-    if (page) {
-      const parsedPage = parseInt(page, 10);
-      if (!isNaN(parsedPage) && parsedPage >= 1) {
-        pageNum = parsedPage;
+    if (page !== null && page !== undefined && page !== '') {
+      const parsedPage = Number(page);
+      if (!Number.isInteger(parsedPage) || parsedPage < 1) {
+        return jsonError('Invalid query parameters: page must be an integer >= 1', 'VALIDATION_ERROR', 400);
       }
+      pageNum = parsedPage;
     }
-    if (pageSize) {
-      const parsedPageSize = parseInt(pageSize, 10);
-      if (!isNaN(parsedPageSize) && parsedPageSize >= 1) {
-        pageSizeNum = Math.min(parsedPageSize, 100);
+    if (pageSize !== null && pageSize !== undefined && pageSize !== '') {
+      const parsedPageSize = Number(pageSize);
+      if (!Number.isInteger(parsedPageSize) || parsedPageSize < 1) {
+        return jsonError('Invalid query parameters: pageSize must be an integer >= 1', 'VALIDATION_ERROR', 400);
       }
+      pageSizeNum = Math.min(parsedPageSize, 100);
     }
 
-    // Role-adaptive visibility: Requesters see only their own requests (BR-05)
-    // Reviewers see assigned requests AND their own requests
-    const baseVisibility: Prisma.ExpenseRequestWhereInput =
-      sessionUser.role === 'REVIEWER'
-        ? {
-            OR: [
-              { requesterId: sessionUser.id },
-              { assignedReviewerId: sessionUser.id },
-            ],
-          }
-        : {
-            requesterId: sessionUser.id,
-          };
+    // Base visibility logic (BR-05)
+    let baseVisibility: Prisma.ExpenseRequestWhereInput;
+    if (isQueueView) {
+      // Reviewer queue view: submitted claims assigned to this reviewer, not raised by them
+      if (sessionUser.role === 'REVIEWER') {
+        baseVisibility = {
+          assignedReviewerId: sessionUser.id,
+          requesterId: { not: sessionUser.id },
+          status: RequestStatus.SUBMITTED,
+        };
+      } else {
+        baseVisibility = { requesterId: 'none' }; // Requesters have no review queue
+      }
+    } else {
+      // General list view
+      baseVisibility =
+        sessionUser.role === 'REVIEWER'
+          ? {
+              OR: [
+                { requesterId: sessionUser.id },
+                { assignedReviewerId: sessionUser.id },
+              ],
+            }
+          : {
+              requesterId: sessionUser.id,
+            };
+    }
 
     const andConditions: Prisma.ExpenseRequestWhereInput[] = [baseVisibility];
 
@@ -101,7 +134,7 @@ export async function GET(req: NextRequest) {
         items: {
           some: {
             category: {
-              equals: category.trim(),
+              equals: category.trim().toUpperCase(),
               mode: 'insensitive',
             },
           },
@@ -123,6 +156,7 @@ export async function GET(req: NextRequest) {
           { title: { contains: term, mode: 'insensitive' } },
           { description: { contains: term, mode: 'insensitive' } },
           { requestNumber: { contains: term, mode: 'insensitive' } },
+          { requester: { name: { contains: term, mode: 'insensitive' } } },
         ],
       });
     }
@@ -131,7 +165,7 @@ export async function GET(req: NextRequest) {
       AND: andConditions,
     };
 
-    const [requests, totalCount] = await Promise.all([
+    const [requests, totalCount, statusCountsRaw] = await Promise.all([
       prisma.expenseRequest.findMany({
         where: whereClause,
         include: {
@@ -153,7 +187,27 @@ export async function GET(req: NextRequest) {
       prisma.expenseRequest.count({
         where: whereClause,
       }),
+      prisma.expenseRequest.groupBy({
+        by: ['status'],
+        where: isQueueView && sessionUser.role === 'REVIEWER'
+          ? { assignedReviewerId: sessionUser.id, requesterId: { not: sessionUser.id }, status: RequestStatus.SUBMITTED }
+          : { requesterId: sessionUser.id },
+        _count: { _all: true },
+      }),
     ]);
+
+    const stats = {
+      drafts: 0,
+      submitted: 0,
+      approved: 0,
+      rejected: 0,
+    };
+    for (const row of statusCountsRaw) {
+      if (row.status === RequestStatus.DRAFT) stats.drafts = row._count._all;
+      if (row.status === RequestStatus.SUBMITTED) stats.submitted = row._count._all;
+      if (row.status === RequestStatus.APPROVED) stats.approved = row._count._all;
+      if (row.status === RequestStatus.REJECTED) stats.rejected = row._count._all;
+    }
 
     const serializedRequests = requests.map((r) => ({
       ...r,
@@ -171,8 +225,9 @@ export async function GET(req: NextRequest) {
           page: pageNum,
           pageSize: pageSizeNum,
           totalCount,
-          totalPages: Math.ceil(totalCount / pageSizeNum),
+          totalPages: totalCount === 0 ? 0 : Math.ceil(totalCount / pageSizeNum),
         },
+        stats,
       },
       200
     );

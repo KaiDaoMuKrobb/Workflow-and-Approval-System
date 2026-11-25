@@ -77,6 +77,9 @@ export default function RequestsPage() {
           if (resData.data.pagination) {
             setPagination(resData.data.pagination);
           }
+          if (resData.data.stats) {
+            setStats(resData.data.stats);
+          }
         } else {
           setError('Failed to load expense requests.');
         }
@@ -99,18 +102,6 @@ export default function RequestsPage() {
         }
         const userData = await userRes.json();
         setCurrentUser(userData.data.user);
-
-        // Fetch overall stats
-        const allRes = await fetch('/api/requests?pageSize=100');
-        if (allRes.ok) {
-          const allData = await allRes.json();
-          const allReqs: ExpenseRequest[] = allData.data.requests || [];
-          setStats({
-            drafts: allReqs.filter((r) => r.status === 'DRAFT').length,
-            submitted: allReqs.filter((r) => r.status === 'SUBMITTED').length,
-            approved: allReqs.filter((r) => r.status === 'APPROVED').length,
-          });
-        }
 
         await fetchRequests(1);
       } catch {
