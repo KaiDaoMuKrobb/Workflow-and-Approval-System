@@ -39,4 +39,11 @@ next-env.d.ts
 
 # local specification & course files (keep local only)
 *.pdf
+*.docx
 docs/TEAM_AGREEMENT.md
+*WORK_PLAN*.md
+final-submissions/
+scratch/
+lab-06/
+docs/report/
+docs/labs/*/evidence/
