@@ -1,7 +1,7 @@
 # System-Level Software Design Specification (System-Level SDS)
 **Project:** Corporate Expense Reimbursement System (ExpenseFlow)  
 **Deliverable:** CPE 334 Project Deliverable 1 (Part C: 15 Points)  
-**Theme:** Theme 5 — Workflow and Approval System  
+**Theme:** Theme 5: Workflow and Approval System  
 **Document Status:** Approved Baseline (Sprint 1)  
 **Author / Maintainer:** KaiDaoMuKrobb  
 **Reviewer:** siripitch-c  
@@ -155,7 +155,7 @@ flowchart LR
 > **One detail page, not two.** An earlier revision of this diagram drew a separate
 > `/reviewer/requests/[id]`. `F-03` built a single page at `/requests/[id]` and `F-04` added the decision
 > controls to it rather than duplicating the screen: the two would have shared every field, every state and
-> the same `GET /api/requests/:id` call. What the page offers follows the viewer — the Approve and Reject
+> the same `GET /api/requests/:id` call. What the page offers follows the viewer: the Approve and Reject
 > controls appear only for the assigned reviewer of a `SUBMITTED` request, and the back link returns each
 > viewer to the list they came from. `TEST-39` and `TEST-39b` .. `TEST-39g` verify both directions. Hiding
 > the controls is not the authorization: every one of those cases is also refused by
@@ -237,7 +237,7 @@ Every route handler executes an invariant 4-tier evaluation pipeline before acce
 
 | Endpoint | Method | Public | Requester (Owner) | Requester (Other) | Assigned Reviewer | Unrelated Reviewer |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| `/api/auth/login` | POST | ✅ | — | — | — | — |
+| `/api/auth/login` | POST | ✅ | N/A | N/A | N/A | N/A |
 | `/api/auth/logout` | POST | ❌ | ✅ | ✅ | ✅ | ✅ |
 | `/api/auth/me` | GET | ❌ | ✅ | ✅ | ✅ | ✅ |
 | `/api/requests` (Create) | POST | ❌ | ✅ | ✅ | ✅ | ✅ |

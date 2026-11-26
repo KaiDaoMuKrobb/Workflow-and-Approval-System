@@ -1,7 +1,7 @@
 # Software Requirements Specification (SRS)
 **Project:** Corporate Expense Reimbursement System (ExpenseFlow)  
 **Deliverable:** CPE 334 Project Deliverable 1 (Part A: 10 Points)  
-**Theme:** Theme 5 — Workflow and Approval System  
+**Theme:** Theme 5: Workflow and Approval System  
 **Document Status:** Approved Baseline (Sprints 1–3)  
 **Author / Maintainer:** KaiDaoMuKrobb  
 **Reviewer:** siripitch-c  
@@ -117,7 +117,7 @@ All business rules are enforced exclusively at the **Application / Server Layer 
 - **`BR-08 (Resubmission Authorization)`**:  
   Only the original requester can edit and resubmit a request in `RETURNED` status. Resubmission transitions the status back to `SUBMITTED` and appends an entry to `ApprovalHistory`.
 - **`BR-09 (High-Value Approval Threshold Rule)`**:  
-  If a request's `totalAmount` $\ge$ threshold (e.g. 10,000.00 THB), initial approval moves status to `STAGE1_APPROVED`. The request requires a distinct secondary reviewer action before reaching `APPROVED`.
+  If a request's `totalAmount` > 50,000.00 THB, initial approval moves status to `PENDING_SECOND_APPROVAL`. The request requires a distinct secondary reviewer action before reaching `APPROVED`. Neither reviewer may be the requester, and Reviewer 2 cannot be Reviewer 1 (dual control requirement).
 
 ### Sprint 3 Rules
 - **`BR-10 (Report Export Authorization)`**:  
