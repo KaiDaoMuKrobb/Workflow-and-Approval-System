@@ -8,8 +8,8 @@
 - **Team ID:** EN-011
 - **Project Name:** ExpenseFlow (Theme 5: Workflow and Approval System)
 - **Student Members:**
-  1. **Pattarawadee Thanapoomthakul** (Student ID: `67070503435`, GitHub: `@KaiDaoMuKrobb`) &mdash; Peer Reviewer & Integrator
-  2. **Siripitch Chaiyabutra** (Student ID: `67070503440`, GitHub: `@siripitch-c`) &mdash; Author & Implementer
+  1. **Pattarawadee Thanapoomthakul** (Student ID: `67070503435`, GitHub: `@KaiDaoMuKrobb`)  -  Peer Reviewer & Integrator
+  2. **Siripitch Chaiyabutra** (Student ID: `67070503440`, GitHub: `@siripitch-c`)  -  Author & Implementer
 - **Target Deadline:** 29 November 2026 at 23:59 ICT via LEB2 (100 Lab Points / 5% Course Grade)
 - **Repository URL:** `https://github.com/KaiDaoMuKrobb/Workflow-and-Approval-System`
 - **Accepted Sprint 1 Baseline:** Commit `3cd8c4518753077d7802842da545f1d4a7c73db5` (Tag `v0.1.0`)
@@ -50,7 +50,7 @@
 ### 1.1 Precise Change Request & TA Approval
 - **Approver:** Supachok Deetaweesukh (Tik), Course Teaching Assistant
 - **Approval Date:** 24 November 2026 at 19:34 ICT
-- **Approved Decision:** `DEC-02 v2.0` &mdash; Refuse self-assignment at submission time with HTTP 400 Bad Request and error code `SELF_ASSIGNMENT`, provide clear UI feedback, retain the `BR-01` decision-endpoint guard (403 Forbidden), and directly test the backend API.
+- **Approved Decision:** `DEC-02 v2.0`  -  Refuse self-assignment at submission time with HTTP 400 Bad Request and error code `SELF_ASSIGNMENT`, provide clear UI feedback, retain the `BR-01` decision-endpoint guard (403 Forbidden), and directly test the backend API.
 - **Reason:** In Lab 6 independent UAT, partner team recorded limitation `K-2`: when a dual-role user self-assigns a claim, it gets stuck in `SUBMITTED` permanently because `BR-01` blocks self-approval, other reviewers cannot decide it, and editing is locked.
 - **Evidence:** `EVID_TA_01_approval_dec02.jpg` (recorded in Issue #39).
 
@@ -112,7 +112,7 @@
 
 ## 3. Part C: Objective Engineering Metrics
 
-### 3.1 Five Dated Engineering Metrics (07 Nov 2026 &mdash; 26 Nov 2026)
+### 3.1 Five Dated Engineering Metrics (07 Nov 2026  -  26 Nov 2026)
 1. **Completed Issues (M1):** 11 Issues closed (`#17`–`#25`, `#39`, `#43`).
 2. **Merged Pull Requests (M2):** 14 PRs merged into `main` and `staging` (`#27`–`#29`, `#31`–`#34`, `#36`–`#38`, `#40`–`#42`, `#44`).
 3. **Automated Test Results (M3):** 71 passed, 0 failed, 0 skipped on commit `3d7235d` (100% pass rate).
@@ -136,10 +136,10 @@
 - **Deployment Status:** Production release deployed to Google Cloud Run as revision `expenseflow-00008-lxv` (100% traffic) via GitHub Actions Run `45832964439`; live smoke test passed.
 
 ### 4.2 Technical Debt Register
-- `TD-01`: Redundant category enum definitions across files (Priority: Medium &mdash; Owner: Pattarawadee)
-- `TD-02`: Missing composite indexes on `category` and `createdAt` (Priority: Low &mdash; Owner: Siripitch)
-- `TD-03`: Playwright browser E2E test not gated in CI PR workflow (Priority: Medium &mdash; Owner: Siripitch)
-- `TD-04`: Dead code in `src/lib/review-queue.ts` following server-side migration (Priority: Low &mdash; Owner: Pattarawadee)
+- `TD-01`: Redundant category enum definitions across files (Priority: Medium  -  Owner: Pattarawadee)
+- `TD-02`: Missing composite indexes on `category` and `createdAt` (Priority: Low  -  Owner: Siripitch)
+- `TD-03`: Playwright browser E2E test not gated in CI PR workflow (Priority: Medium  -  Owner: Siripitch)
+- `TD-04`: Dead code in `src/lib/review-queue.ts` following server-side migration (Priority: Low  -  Owner: Pattarawadee)
 
 ### 4.3 Three Brief Retrospective Reflections
 1. **What Helped:** Formalizing contract updates and obtaining teammate peer review *before* writing code (PR #40 preceding PR #42) ensured 100% alignment on invariant order and error codes.
