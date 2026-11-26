@@ -24,3 +24,18 @@ export const MAX_SINGLE_ITEM_AMOUNT = 100000;
 export const SINGLE_ITEM_CAP_MESSAGE =
   'Single item amount cannot exceed 100,000 THB.';
 
+/**
+ * Supported expense categories across line items and filtering (F-07 / FR-08).
+ */
+export const VALID_EXPENSE_CATEGORIES = [
+  'TRAVEL',
+  'MEALS',
+  'SUPPLIES',
+  'EQUIPMENT',
+  'OFFICE_SUPPLIES',
+  'OTHER',
+] as const;
+
+export type ValidExpenseCategory = (typeof VALID_EXPENSE_CATEGORIES)[number];
+
+

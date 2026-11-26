@@ -80,7 +80,7 @@ reserved in the team agreement §9.2 and never change once allocated.
 | :--- | :--- | :--- | :--- | :--- |
 | `FR-06`, `BR-07`, `BR-08` | Return and resubmission | `F-05` | 2 | `planned` |
 | `FR-07`, `BR-09` | Second approval stage | `F-06` | 2 | `planned` |
-| `FR-08` | Search, filter and paging | `F-07` | 2 | `planned` |
+| `FR-08` | Search, filter and paging | `F-07` | 2 | `in progress` — contract specified in `docs/sprints/sprint-2/F-07-search-filter.md` (Issue #43); `AC-70` .. `AC-76` mapped to `TEST-70` .. `TEST-76`, `TEST-76b`, `TEST-78`, `TEST-79`; `AC-77` verified via interactive UI controls on `/requests` and `/reviewer/dashboard` |
 | `FR-09` | Department summaries and analytics | `F-08` | 3 | `planned` |
 | `FR-10`, `BR-10` | Financial report export | `F-09` | 3 | `planned` |
 | — | Hardening and regression | `F-10` | 3 | `planned` |
@@ -154,6 +154,14 @@ completed after each feature lands and carried into the Deliverable 1 report. Th
 | `AC-10` .. `AC-19`, `AC-18b`, `AC-18c`, `AC-18d`, `AC-19b` | `TEST-10` .. `TEST-19`, `TEST-10b`, `TEST-18b`, `TEST-18c`, `TEST-18d`, `TEST-19b` | API | `tests/api/request-crud.test.ts` | `pass` — 71/71 on `npm test` · `TEST-18` revised and `TEST-18d` added under `DEC-02` v2.0 |
 | `AC-18e` | manual UI check | UI | screenshots attached to the Lab 7 implementation pull request | `pass` — signed in as `david.both@test.com`, a `REVIEWER`, the reviewer list offers only Carol Manager and the exclusion notice is shown; signed in as `alice.req@test.com` it offers both Carol Manager and David Dual Role, with no notice |
 | `AC-10` .. `AC-19` | `TEST-E2E-01` | E2E | `tests/e2e/requester-journey.spec.ts` | `pass` — 1 passed in 19.1 s, run by KaiDaoMuKrobb while reviewing PR #13 |
+
+### `F-07` Multi-criteria filtering, search & pagination (Sprint 2) — KaiDaoMuKrobb
+
+| AC | Test | Level | Test file | Result |
+| :--- | :--- | :--- | :--- | :--- |
+| `AC-70` .. `AC-76` | `TEST-70` .. `TEST-76`, `TEST-76b`, `TEST-78`, `TEST-79` | API | `tests/api/requests-search-filter.test.ts` | `pass` — 10/10 tests passing on CI; verified under PR #41 (Issue #43) |
+| `AC-77` | manual UI check | UI | recorded in PR #41 (`/requests` & `/reviewer/dashboard`) | `pass` — real-time filter tags, active query parameters and pagination controls verified |
+
 
 ---
 
