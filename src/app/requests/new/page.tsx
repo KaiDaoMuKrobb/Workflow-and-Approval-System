@@ -40,6 +40,7 @@ function NewRequestForm() {
     { category: 'TRAVEL', description: '', amount: '' },
   ]);
   const [reviewers, setReviewers] = useState<Reviewer[]>([]);
+  const [currentUserId, setCurrentUserId] = useState('');
   const [selectedReviewerId, setSelectedReviewerId] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -48,13 +49,26 @@ function NewRequestForm() {
   useEffect(() => {
     async function init() {
       try {
-        // Fetch eligible reviewers
+        // Who is signed in. AC-18e needs this to keep the requester out of the
+        // reviewer list: under DEC-02 v2.0 a request cannot be assigned to oneself.
+        let signedInId = '';
+        const meRes = await fetch('/api/auth/me');
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          signedInId = meData.data.user.id;
+          setCurrentUserId(signedInId);
+        }
+
+        // Fetch eligible reviewers. GET /api/reviewers still returns every
+        // REVIEWER account (AC-18c); the caller is removed here, on the screen.
         const revRes = await fetch('/api/reviewers');
         if (revRes.ok) {
           const revData = await revRes.json();
-          setReviewers(revData.data.reviewers);
-          if (revData.data.reviewers.length > 0) {
-            setSelectedReviewerId(revData.data.reviewers[0].id);
+          const all: Reviewer[] = revData.data.reviewers;
+          setReviewers(all);
+          const selectable = all.filter((rev) => rev.id !== signedInId);
+          if (selectable.length > 0) {
+            setSelectedReviewerId(selectable[0].id);
           }
         }
 
@@ -178,6 +192,11 @@ function NewRequestForm() {
       setLoading(false);
     }
   };
+
+  // AC-18e: the caller never appears among the choices, so the refusal that
+  // POST /api/requests/:id/submit would return can no longer be triggered here.
+  const selectableReviewers = reviewers.filter((rev) => rev.id !== currentUserId);
+  const ownAccountExcluded = reviewers.some((rev) => rev.id === currentUserId);
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
@@ -398,12 +417,23 @@ function NewRequestForm() {
                 onChange={(e) => setSelectedReviewerId(e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               >
-                {reviewers.map((rev) => (
+                {selectableReviewers.map((rev) => (
                   <option key={rev.id} value={rev.id}>
                     {rev.name} ({rev.role} — {rev.department}) — {rev.email}
                   </option>
                 ))}
               </select>
+              {ownAccountExcluded && (
+                <p className="text-xs text-amber-600 mt-1">
+                  Your own account is not listed. A request cannot be assigned to
+                  yourself, because the reviewer who decides it must be someone else.
+                </p>
+              )}
+              {selectableReviewers.length === 0 && (
+                <p className="text-xs text-red-500 mt-1">
+                  No other reviewer is available, so this request cannot be submitted yet.
+                </p>
+              )}
               <p className="text-xs text-slate-400 mt-1">
                 Designated reviewer will inspect this request once submitted.
               </p>

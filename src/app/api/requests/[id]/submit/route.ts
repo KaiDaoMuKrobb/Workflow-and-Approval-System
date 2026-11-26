@@ -51,6 +51,20 @@ export async function POST(
       return jsonError('Assigned reviewer is required for submission', 'VALIDATION_ERROR', 400);
     }
 
+    // DEC-02 v2.0 (AC-18): a requester cannot name themselves as the reviewer.
+    // Checked here, before the reviewer is loaded, so that a REQUESTER who names
+    // themselves is told the specific reason instead of the generic role error.
+    // Nothing has been written at this point, so the request is left in DRAFT with
+    // no ApprovalHistory row. The BR-01 guard at POST /review is a second layer and
+    // is unchanged.
+    if (assignedReviewerId.trim() === existingRequest.requesterId) {
+      return jsonError(
+        'You cannot assign this request to yourself. Please choose a different reviewer.',
+        'SELF_ASSIGNMENT',
+        400
+      );
+    }
+
     // Verify reviewer exists and holds REVIEWER role
     const reviewer = await prisma.user.findUnique({
       where: { id: assignedReviewerId.trim() },
@@ -60,7 +74,6 @@ export async function POST(
       return jsonError('Assigned reviewer must hold REVIEWER role', 'VALIDATION_ERROR', 400);
     }
 
-    // DEC-02: Self-assignment (assignedReviewerId == requesterId) is permitted at submit time.
     // Transition status to SUBMITTED and log in ApprovalHistory in a single transaction
     const submittedRequest = await prisma.$transaction(async (tx) => {
       const updated = await tx.expenseRequest.update({
