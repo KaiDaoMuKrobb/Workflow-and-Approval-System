@@ -82,8 +82,32 @@ Approved and ready to merge into `staging`.
 
 ---
 
-## 3. Staging Integration & Release Deployment Path
+## 3. Staging Integration
 
 - **Merge Event:** PR #42 was merged into branch `staging` at commit `3d7235d`.
-- **Evolving Repository Discipline:** In accordance with Lab 7 Handout §2 (*"The same approved change may be included in the project release candidate... a separate Sprint 1-only branch or release is not required"*), the maintenance change was integrated into the team's evolving `staging` branch.
-- **Deployment & Smoke Test:** The change will be deployed to Google Cloud Run via the automated deployment pipeline (`deploy.yml`) upon promoting the release candidate to `main`, where `deploy/smoke_test.py` validates the live endpoints.
+- **Evolving Repository Discipline:** In accordance with Lab 7 Handout §2 (*"The same approved change may be included in the project release candidate... a separate Sprint 1-only branch or release is not required"*), the maintenance change was integrated into the team's evolving `staging` branch alongside Sprint 2 Feature `F-07` (PR #41).
+
+---
+
+## 4. Production Release (`main`) & GCP Cloud Run Deployment
+
+- **Release Pull Request:** [PR #44](https://github.com/KaiDaoMuKrobb/Workflow-and-Approval-System/pull/44) &mdash; `release: DEC-02 v2.0 maintenance release`
+- **Release Author:** Siripitch Chaiyabutra (@siripitch-c)
+- **Release Reviewer:** Pattarawadee Thanapoomthakul (@KaiDaoMuKrobb)
+- **Review Decision:** `APPROVE` (Submitted 26 Nov 2026, 13:48:18 UTC / 20:48:18 ICT)
+- **Merge Event:** Merged into `main` at commit [`918c02a8837c5eea16df0458c0c3e66ffc87468c`](https://github.com/KaiDaoMuKrobb/Workflow-and-Approval-System/commit/918c02a) on 26 Nov 2026, 13:49:52 UTC / 20:49:52 ICT
+- **Release Tag:** [`v0.2.0`](https://github.com/KaiDaoMuKrobb/Workflow-and-Approval-System/releases/tag/v0.2.0)
+- **Deployment Pipeline:** GitHub Actions [`Deploy demo`](https://github.com/KaiDaoMuKrobb/Workflow-and-Approval-System/actions/workflows/deploy.yml) (Run ID: [`45832964439`](https://github.com/KaiDaoMuKrobb/Workflow-and-Approval-System/actions/runs/45832964439))
+- **Pipeline Outcome:** **100% SUCCESS** in 5m 36s (completed 26 Nov 2026, 13:55:31 UTC / 20:55:31 ICT)
+  - `test-and-docker`: Passed test suite (71 passing tests) and built production container.
+  - `push`: Uploaded container image to Google Artifact Registry (`asia-southeast1-docker.pkg.dev/cpe-se-expenseflow-31/expenseflow-repo/expenseflow:918c02a`).
+  - `migrate`: Cloud Run Job `expenseflow-migrate` executed schema check (0 pending migrations).
+  - `deploy`: Deployed to Cloud Run Service `expenseflow` in region `asia-southeast1`.
+  - `smoke-test`: `deploy/smoke_test.py` validated live endpoints against the public URL.
+- **Live Deployed Revision:** **`expenseflow-00008-lxv`** (receiving 100% of production traffic).
+- **Public Production URL:** `https://expenseflow-v7yyq5xbtq-as.a.run.app`
+- **Post-Deploy Endpoint Verification:**
+  - `GET https://expenseflow-v7yyq5xbtq-as.a.run.app/api/health` &rarr; `HTTP 200 OK` (`{"status":"ok","service":"expenseflow"}`)
+  - `GET https://expenseflow-v7yyq5xbtq-as.a.run.app/api/ready` &rarr; `HTTP 200 OK` (`{"status":"ready","db":"connected"}`)
+  - `GET https://expenseflow-v7yyq5xbtq-as.a.run.app/login` &rarr; `HTTP 200 OK` (interactive login form rendered)
+  - Live smoke test confirmed zero regressions and certified production availability.

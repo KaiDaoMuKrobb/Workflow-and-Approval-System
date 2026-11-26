@@ -20,14 +20,15 @@
 |---|---|:---:|---|
 | **Version Baseline** | Accepted Sprint 1 Baseline | **VERIFIED** | `3cd8c4518753077d7802842da545f1d4a7c73db5` (`v0.1.0`) |
 | **Pre-Change Version** | Deployed Pre-change Implementation | **VERIFIED** | `5636e54407dc8f7402acf1b9d173c4c949faad41` (`expenseflow-00007-nv7`) |
-| **Submitted Version** | Maintained Staging Release Commit | **VERIFIED** | `3d7235d3b53faa6c67a2b9d3180af26ebfa31c9b` (PR #42 merge commit) |
-| **Defect Backlog** | Critical (P0) / High (P1) Defects | **ZERO** | 0 open P0/P1 defects; UAT limitation `K-2` fully closed via PR #42. |
-| **Automated Tests** | Full Regression Suite on Staging | **PASS** | 71 passed, 0 failed, 0 skipped across 11 test files (`npm test`). |
+| **Submitted Version** | Maintained Production Release Commit | **VERIFIED** | `918c02a8837c5eea16df0458c0c3e66ffc87468c` (`v0.2.0`, PR #44 merge commit on `main`) |
+| **Deployed Revision** | Active Google Cloud Run Revision | **VERIFIED** | `expenseflow-00008-lxv` (100% traffic, GitHub Actions Run ID: `45832964439`) |
+| **Defect Backlog** | Critical (P0) / High (P1) Defects | **ZERO** | 0 open P0/P1 defects; UAT limitation `K-2` fully closed via PR #42 & PR #44. |
+| **Automated Tests** | Full Regression Suite on Release | **PASS** | 71 passed, 0 failed, 0 skipped across 11 test files (`npm test`). |
 | **Selected User Tests** | Form Self-Assignment Refusal (`AC-18e`) | **PASS** | Form dropdown omits caller account; informative notice displayed. |
 | **Preserved Behavior** | Defense-in-Depth Self-Approval (`BR-01`) | **PASS** | `TEST-31` & `TEST-38` verify 403 Forbidden remains active. |
 | **Configuration & Secrets** | Keyless Authentication & Secret Isolation | **SECURE** | WIF provider used on GCP; zero API keys or secrets committed to Git. |
 | **Documentation & Run** | Contracts & Setup Guide Synchronized | **COMPLETE** | `docs/srs.md`, `F-02-request-crud.md`, and README run commands updated. |
-| **Deployment Pipeline** | Automated Cloud Run Deployment | **HEALTHY** | GitHub Actions `deploy.yml` with automated smoke tests verified. |
+| **Deployment Pipeline** | Automated Cloud Run Deployment & Smoke | **VERIFIED** | GitHub Actions `deploy.yml` Run #45832964439 green; `deploy/smoke_test.py` passed live. |
 
 ---
 

@@ -78,9 +78,9 @@ reserved in the team agreement §9.2 and never change once allocated.
 
 | Requirement | Capability | Feature | Sprint | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| `FR-06`, `BR-07`, `BR-08` | Return and resubmission | `F-05` | 2 | `planned` |
-| `FR-07`, `BR-09` | Second approval stage | `F-06` | 2 | `planned` |
-| `FR-08` | Search, filter and paging | `F-07` | 2 | `in progress` — contract specified in `docs/sprints/sprint-2/F-07-search-filter.md` (Issue #43); `AC-70` .. `AC-76` mapped to `TEST-70` .. `TEST-76`, `TEST-76b`, `TEST-78`, `TEST-79`; `AC-77` verified via interactive UI controls on `/requests` and `/reviewer/dashboard` |
+| `FR-06`, `BR-07`, `BR-08` | Return and resubmission | `F-05` | 2 | `planned` (Issue #45) |
+| `FR-07`, `BR-09` | Second approval stage | `F-06` | 2 | `planned` (threshold agreed: 10,000.00 THB) |
+| `FR-08` | Search, filter and paging | `F-07` | 2 | `pass` — merged into `staging` via PR #41 (Issue #43) and released to `main` via PR #44 (`v0.2.0`); `AC-70` .. `AC-76` mapped to `TEST-70` .. `TEST-76`, `TEST-76b`, `TEST-78`, `TEST-79`; `AC-77` verified via interactive UI controls on `/requests` and `/reviewer/dashboard` |
 | `FR-09` | Department summaries and analytics | `F-08` | 3 | `planned` |
 | `FR-10`, `BR-10` | Financial report export | `F-09` | 3 | `planned` |
 | — | Hardening and regression | `F-10` | 3 | `planned` |
@@ -173,7 +173,7 @@ below are in elaboration, not in coverage.
 
 | # | Gap | Effect | Owner |
 | :--- | :--- | :--- | :--- |
-| 1 | The threshold that triggers the second approval stage is given in `docs/srs.md` only as an example (10,000.00 THB) | `F-06` cannot be specified until the value is agreed and recorded as a design decision | both, at Sprint 2 start |
+| 1 | Second approval stage threshold | Agreed and confirmed at 10,000.00 THB (decision finalized by pair) | closed (both) |
 | 2 | Sprint 2 and Sprint 3 acceptance criteria are not yet allocated | The later-sprint rows in §2 name requirements and features but no `AC` or `TEST` identifiers | both, at each sprint start |
 
 > **Closed Sprint 1 Gaps:**

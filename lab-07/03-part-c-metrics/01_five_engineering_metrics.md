@@ -12,10 +12,10 @@
 | Metric | Definition | Scope | Snapshot / Observation Window | Value | Evidence / Source ID |
 |---|---|---|---|---|---|
 | **M1: Completed Issues** | Number of closed GitHub issues representing delivered engineering work (excluding duplicates/cancelled). | Repository: `KaiDaoMuKrobb/Workflow-and-Approval-System` | 07 Nov 2026 &mdash; 26 Nov 2026 | **11 Issues** (11 completed, 0 cancelled) | GitHub Issues List (`#17`–`#25`, `#39`, `#43`) |
-| **M2: Merged PRs** | Number of Pull Requests peer-reviewed and merged into `staging` or `main`. | Repository: `KaiDaoMuKrobb/Workflow-and-Approval-System` | 07 Nov 2026 &mdash; 26 Nov 2026 | **13 PRs** (8 into `main`, 5 into `staging`) | GitHub Pull Requests List (`#27`–`#29`, `#31`–`#34`, `#36`–`#38`, `#40`–`#42`) |
+| **M2: Merged PRs** | Number of Pull Requests peer-reviewed and merged into `staging` or `main`. | Repository: `KaiDaoMuKrobb/Workflow-and-Approval-System` | 07 Nov 2026 &mdash; 26 Nov 2026 | **14 PRs** (9 into `main`, 5 into `staging`) | GitHub Pull Requests List (`#27`–`#29`, `#31`–`#34`, `#36`–`#38`, `#40`–`#42`, `#44`) |
 | **M3: Automated Test Results** | Passed, failed, and skipped test counts for the full test suite on the maintained release. | Test Suite: `npm test` (`vitest run`) | Tested on Commit `3d7235d` (Lab 7 Staging Integration) | **71 Passed, 0 Failed, 0 Skipped** (100% pass) | Vitest Test Runner Summary (11 test files) |
 | **M4: UAT Defect Status** | User-facing defects discovered in UAT, tracked to resolution and verified. | Product Scope: Sprint 1 Behavior Maintenance | 19 Nov 2026 (Discovered) &mdash; 25 Nov 2026 (Verified) | **1 Opened, 1 Resolved** (100% resolution) | UAT Defect `K-2` / GitHub Issue `#39` |
-| **M5: CI Run Outcomes** | Successful, failed, and cancelled automated workflow executions on PRs and releases. | GitHub Actions: `CI & Docker Build` & `Deploy demo` | 07 Nov 2026 &mdash; 26 Nov 2026 | **16 Success, 1 Failed, 1 Cancelled** (94.1% green) | GitHub Actions Run History (Runs `43290`..`45769`) |
+| **M5: CI Run Outcomes** | Successful, failed, and cancelled automated workflow executions on PRs and releases. | GitHub Actions: `CI & Docker Build` & `Deploy demo` | 07 Nov 2026 &mdash; 26 Nov 2026 | **17 Success, 1 Failed, 1 Cancelled** (94.4% green) | GitHub Actions Run History (Runs `43290`..`45832`) |
 
 ---
 
@@ -48,6 +48,7 @@
 - `PR #40`: `docs/lab7-dec02-contract` $\rightarrow$ `staging` (Merged 25 Nov 2026 by KaiDaoMuKrobb)
 - `PR #42`: `change/lab7-dec02-self-assignment` $\rightarrow$ `staging` (Merged 25 Nov 2026 by KaiDaoMuKrobb)
 - `PR #41`: `feat/F-07-search-filter` $\rightarrow$ `staging` (Merged 26 Nov 2026 by siripitch-c)
+- `PR #44`: `staging` $\rightarrow$ `main` (Merged 26 Nov 2026 by KaiDaoMuKrobb &mdash; `release: DEC-02 v2.0 maintenance release`)
 
 ### M3: Automated Test Execution Breakdown (Commit `3d7235d`)
 - `tests/api/auth.test.ts`: 6 passed

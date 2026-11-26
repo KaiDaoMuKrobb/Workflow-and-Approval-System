@@ -15,6 +15,8 @@
 - **Accepted Sprint 1 Baseline:** Commit `3cd8c4518753077d7802842da545f1d4a7c73db5` (Tag `v0.1.0`)
 - **Pre-Change Implementation:** Commit `5636e54407dc8f7402acf1b9d173c4c949faad41` (Deployed as `expenseflow-00007-nv7`)
 - **Maintained Staging Commit:** Commit `3d7235d3b53faa6c67a2b9d3180af26ebfa31c9b` (PR #42) / `e45df61` (Staging HEAD)
+- **Production Release (`main`):** Commit `918c02a8837c5eea16df0458c0c3e66ffc87468c` (Tag `v0.2.0`, PR #44)
+- **Active GCP Cloud Run Revision:** `expenseflow-00008-lxv` (100% traffic, Run ID `45832964439`)
 - **GCP Deployed Service URL:** `https://expenseflow-v7yyq5xbtq-as.a.run.app`
 
 ---
@@ -27,10 +29,11 @@
 | &bull; A.1 | Precise Change Request & TA Approval | Approval Email, Directives 1–4, Version Baselines | Section 1.1 |
 | &bull; A.2 | System Impact Analysis & Invariant Ordering | Full Traceability Table, Mermaid Invariant Flow | Section 1.2 |
 | &bull; A.3 | Revised Contract & Pre-Implementation Review | Before/After Contract Excerpts, PR #40 Approval | Section 1.3 |
-| **Part B** | **Implementation & Regression Safe Delivery (50 pts)** | Commits `3975dc5` & `6ab7290`, PR #42 | Section 2 |
+| **Part B** | **Implementation & Regression Safe Delivery (50 pts)** | Commits `3975dc5` & `6ab7290`, PR #42, PR #44 | Section 2 |
 | &bull; B.1 | RED Phase: New Behavior Failing on Old Code | Vitest Failure Output (Expected 400, Got 200) | Section 2.1 |
 | &bull; B.2 | GREEN Phase: Implementation & Code Diff | Code Diff in `submit/route.ts` & `requests/new/page.tsx` | Section 2.2 |
 | &bull; B.3 | Regression Suite & Staging Integration | 71/71 Tests Green, Substantive Review, Staging Commit | Section 2.3 |
+| &bull; B.4 | Production Release (`main`) & GCP Deployment | PR #44 Approved, Revision `expenseflow-00008-lxv`, Smoke Green | Section 2.4 |
 | **Part C** | **Objective Engineering Metrics (15 pts)** | Metrics Table, Action Interpretation ($\le 100$ words) | Section 3 |
 | &bull; C.1 | Five Verifiable Engineering Metrics | M1 (11 Issues), M2 (13 PRs), M3 (71 Tests), M4 (Defect K-2), M5 (16 CI) | Section 3.1 |
 | &bull; C.2 | Interpretation & Evidence-Based Action | Exactly 93 words: E2E Browser Automation Action | Section 3.2 |
@@ -92,6 +95,13 @@
 - **Teammate PR Review:** Pull Request #42 formally reviewed and approved by Pattarawadee Thanapoomthakul verifying all 4 TA directives, RED/GREEN commits, and guard order.
 - **Merge Commit:** `3d7235d3b53faa6c67a2b9d3180af26ebfa31c9b` into `staging`.
 
+### 2.4 Production Release (`main`) & Cloud Run Deployment
+- **Release PR:** Pull Request #44 (`release: DEC-02 v2.0 maintenance release`) authored by Siripitch Chaiyabutra, formally reviewed and approved by Pattarawadee Thanapoomthakul.
+- **Merge Commit:** [`918c02a8837c5eea16df0458c0c3e66ffc87468c`](https://github.com/KaiDaoMuKrobb/Workflow-and-Approval-System/commit/918c02a) merged into `main` (Tag `v0.2.0`).
+- **Cloud Run Deployment:** GitHub Actions `Deploy demo` (Run ID: `45832964439`) completed in 5m 36s with status **`success`**.
+- **Live Revision:** `expenseflow-00008-lxv` (receiving 100% of production traffic at `https://expenseflow-v7yyq5xbtq-as.a.run.app`).
+- **Post-Deploy Verification:** `deploy/smoke_test.py` validated live health (`/api/health` 200 OK), DB readiness (`/api/ready` 200 OK), and public UI availability.
+
 ---
 
 ## 3. Part C: Objective Engineering Metrics
@@ -117,7 +127,7 @@
 - **Critical / Blocking Defects:** 0
 - **Regression Suite:** 71/71 passing
 - **Configuration & Secrets:** Keyless Workload Identity Federation (WIF) on Google Cloud Run; 0 secrets committed.
-- **Deployment Status:** Healthy automated CI/CD pipeline with post-deployment smoke tests.
+- **Deployment Status:** Production release deployed to Google Cloud Run as revision `expenseflow-00008-lxv` (100% traffic) via GitHub Actions Run `45832964439`; live smoke test passed.
 
 ### 4.2 Technical Debt Register
 - `TD-01`: Redundant category enum definitions across files (Priority: Medium &mdash; Owner: Pattarawadee)
