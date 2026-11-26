@@ -439,7 +439,7 @@ describe('Feature F-07: Multi-criteria Filtering, Search & Pagination (FR-08)', 
     expect(resPageSizeZero.status).toBe(400);
   });
 
-  it('TEST-79 / AC-79 (NFR-03): filtered multi-criteria query responds within 500 ms', async () => {
+  it('TEST-79 / NFR-03: filtered multi-criteria query responds within 500 ms', async () => {
     // Warm-up call
     await listRequestsHandler(
       new NextRequest('http://localhost:3000/api/requests?status=SUBMITTED&category=EQUIPMENT', {
