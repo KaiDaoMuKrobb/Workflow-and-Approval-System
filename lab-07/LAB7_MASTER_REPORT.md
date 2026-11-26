@@ -14,7 +14,7 @@
 - **Repository URL:** `https://github.com/KaiDaoMuKrobb/Workflow-and-Approval-System`
 - **Accepted Sprint 1 Baseline:** Commit `3cd8c4518753077d7802842da545f1d4a7c73db5` (Tag `v0.1.0`)
 - **Pre-Change Implementation:** Commit `5636e54407dc8f7402acf1b9d173c4c949faad41` (Deployed as `expenseflow-00007-nv7`)
-- **Maintained Staging Commit:** Commit `3d7235d3b53faa6c67a2b9d3180af26ebfa31c9b` (PR #42) / `e45df61` (Staging HEAD)
+- **Maintained Staging Commit:** Commit `3d7235d3b53faa6c67a2b9d3180af26ebfa31c9b` (PR #42) / `3b7258a` (staging HEAD promoted by PR #44)
 - **Production Release (`main`):** Commit `918c02a8837c5eea16df0458c0c3e66ffc87468c` (Tag `v0.2.0`, PR #44)
 - **Active GCP Cloud Run Revision:** `expenseflow-00008-lxv` (100% traffic, Run ID `45832964439`)
 - **GCP Deployed Service URL:** `https://expenseflow-v7yyq5xbtq-as.a.run.app`
@@ -64,7 +64,7 @@
 ### 1.3 Pre-Implementation Teammate Review (PR #40)
 - **Commit:** `00082be` (Branch: `docs/lab7-dec02-contract`)
 - **Reviewer:** Pattarawadee Thanapoomthakul (@KaiDaoMuKrobb)
-- **Merge Commit:** `8fb15b3` into `staging` (25 Nov 2026, 17:41 UTC)
+- **Merge Commit:** `8fb15b3` into `staging` (24 Nov 2026, 16:07 UTC / 23:07 ICT, confirmed by commit date and GitHub API `mergedAt`)
 - **Sequence Verification:** The contract was formally merged into `staging` **before** any implementation code was committed.
 
 ---
