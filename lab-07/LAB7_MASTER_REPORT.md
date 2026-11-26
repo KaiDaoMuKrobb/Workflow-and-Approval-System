@@ -101,6 +101,12 @@
 - **Cloud Run Deployment:** GitHub Actions `Deploy demo` (Run ID: `45832964439`) completed in 5m 36s with status **`success`**.
 - **Live Revision:** `expenseflow-00008-lxv` (receiving 100% of production traffic at `https://expenseflow-v7yyq5xbtq-as.a.run.app`).
 - **Post-Deploy Verification:** `deploy/smoke_test.py` validated live health (`/api/health` 200 OK), DB readiness (`/api/ready` 200 OK), and public UI availability.
+- **PR #44 Five Post-Deployment Checks (All PASS):**
+  1. *Self-assignment refusal at submit (400 `SELF_ASSIGNMENT`, claim stays `DRAFT`):* **PASS** (verified by `TEST-18`).
+  2. *Reviewer dropdown omits signed-in user (`AC-18e` notice shown):* **PASS** (verified in deployed chunk `page-011220c1d5f26b22.js`).
+  3. *`BR-01` answers 403 at review endpoint:* **PASS** (verified by `TEST-31` & `TEST-38`).
+  4. *Another requester claim returns 404 under `DEC-03`:* **PASS** (verified by `TEST-24` & `TEST-36`).
+  5. *Existing claims still listed after deployment:* **PASS** (verified non-destructive migration & `F-07` queries).
 
 ---
 
@@ -108,10 +114,10 @@
 
 ### 3.1 Five Dated Engineering Metrics (07 Nov 2026 &mdash; 26 Nov 2026)
 1. **Completed Issues (M1):** 11 Issues closed (`#17`–`#25`, `#39`, `#43`).
-2. **Merged Pull Requests (M2):** 13 PRs merged into `main` and `staging` (`#27`–`#29`, `#31`–`#34`, `#36`–`#38`, `#40`–`#42`).
+2. **Merged Pull Requests (M2):** 14 PRs merged into `main` and `staging` (`#27`–`#29`, `#31`–`#34`, `#36`–`#38`, `#40`–`#42`, `#44`).
 3. **Automated Test Results (M3):** 71 passed, 0 failed, 0 skipped on commit `3d7235d` (100% pass rate).
 4. **UAT Defect Status (M4):** Defect `K-2` opened 19 Nov 2026, resolved and verified 25 Nov 2026 (100% resolution rate).
-5. **CI Run Outcomes (M5):** 16 successful runs, 1 failed (deliberate merge gate proof), 1 cancelled (94.1% green rate).
+5. **CI Run Outcomes (M5):** 17 successful runs, 1 failed (deliberate merge gate proof), 1 cancelled (94.4% green rate).
 
 ### 3.2 Evidence-Based Action Interpretation (93 words)
 > *"While the metrics demonstrate healthy delivery (71/71 tests green, 13 PRs merged, and UAT defect K-2 resolved), an evidence-based risk emerges: **100% of the 13 merged PRs bypassed automated end-to-end browser regression checks**, relying solely on API unit tests (`M3`) and manual UI verification (`M4`).*

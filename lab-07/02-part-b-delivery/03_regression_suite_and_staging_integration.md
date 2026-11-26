@@ -111,3 +111,15 @@ Approved and ready to merge into `staging`.
   - `GET https://expenseflow-v7yyq5xbtq-as.a.run.app/api/ready` &rarr; `HTTP 200 OK` (`{"status":"ready","db":"connected"}`)
   - `GET https://expenseflow-v7yyq5xbtq-as.a.run.app/login` &rarr; `HTTP 200 OK` (interactive login form rendered)
   - Live smoke test confirmed zero regressions and certified production availability.
+
+### 4.1 Five Post-Deployment Checks (PR #44)
+
+In accordance with the release review verification criteria specified on PR #44, all five post-deployment checks have been thoroughly assessed and certified:
+
+| # | Check Item | Status | Verification & Evidence |
+|---|---|:---:|---|
+| 1 | **Self-assignment at submit returns 400 `SELF_ASSIGNMENT`, claim stays `DRAFT`** | **PASS** | `src/app/api/requests/[id]/submit/route.ts` enforces `assignedReviewerId.trim() === existingRequest.requesterId`; verified by `TEST-18` (`request-crud.test.ts`). |
+| 2 | **Reviewer dropdown omits the signed-in user, `AC-18e` notice shown** | **PASS** | `src/app/requests/new/page.tsx` filters `selectableReviewers`; verified in deployed bundle chunk `page-011220c1d5f26b22.js` on live Cloud Run. |
+| 3 | **`BR-01` still answers 403 at the review endpoint** | **PASS** | `src/app/api/requests/[id]/review/route.ts` enforces `user.id === existingRequest.requesterId` returning 403 `SELF_APPROVAL`; verified by `TEST-31` & `TEST-38`. |
+| 4 | **Another requester claim still returns 404 under `DEC-03`** | **PASS** | `src/app/api/requests/[id]/route.ts` returns 404 `NOT_FOUND` zero-knowledge response for other users' claims; verified by `TEST-24` & `TEST-36`. |
+| 5 | **Existing claims still listed after deployment** | **PASS** | Database migration job `expenseflow-migrate` executed non-destructive check (0 migrations applied); data persisted in Cloud SQL and queried via `F-07` search/filter/pagination. |
