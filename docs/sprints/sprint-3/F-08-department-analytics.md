@@ -46,7 +46,7 @@
 
 #### Authentication & Authorization Guards
 1. Caller must present a valid JWT session cookie. Unauthenticated requests return HTTP 401 `UNAUTHENTICATED`.
-2. Caller role must be `REVIEWER` or `ADMIN`. Requesters return HTTP 403 `FORBIDDEN` with error code `FORBIDDEN_ROLE`.
+2. Caller role must be `REVIEWER` or `ADMIN`. Requesters return HTTP 403 `FORBIDDEN` with error code `FORBIDDEN`.
 
 #### Successful Response Format (HTTP 200 OK)
 ```json
@@ -111,7 +111,7 @@
 - **`AC-81` (Role Authorization Guard):**  
   *Given* a user signed in as `REQUESTER` (e.g. `alice.req@test.com`)  
   *When* requesting `GET /api/reports/summary`  
-  *Then* server returns HTTP 403 with code `FORBIDDEN_ROLE`.
+  *Then* server returns HTTP 403 with code `FORBIDDEN`.
 
 - **`AC-82` (Reviewer and Admin Access):**  
   *Given* a user signed in as `REVIEWER` (e.g. `carol.mgr@test.com`) or dual-role (`david.both@test.com`)  
@@ -145,7 +145,7 @@
 | Test ID | AC | Level | Description | Expected Outcome |
 | :--- | :--- | :--- | :--- | :--- |
 | **`TEST-80`** | `AC-80` | API | Unauthenticated request to `/api/reports/summary` | HTTP 401 `UNAUTHENTICATED` |
-| **`TEST-81`** | `AC-81` | API | Requester role attempting to read analytics | HTTP 403 `FORBIDDEN_ROLE` |
+| **`TEST-81`** | `AC-81` | API | Requester role attempting to read analytics | HTTP 403 `FORBIDDEN` |
 | **`TEST-82`** | `AC-82` | API | Reviewer role reading analytics | HTTP 200 with summary data structure |
 | **`TEST-83`** | `AC-83` | API | Excludes DRAFT, SUBMITTED, and REJECTED claims | HTTP 200, totals reflect APPROVED claims only |
 | **`TEST-84`** | `AC-84` | API | Department aggregation calculation | HTTP 200, department totals match sum of claims |
