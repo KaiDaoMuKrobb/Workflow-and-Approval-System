@@ -24,7 +24,7 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 | `in-progress` | Implementation or code review currently active on a dedicated feature branch. |
 | `planned` | Allocated to a sprint; criteria and schema will be elaborated as that increment starts. |
 
-> **Note on Test Counts:** On `origin/staging`, the regression test suite stands at **98/98 passing tests across 14 test files**. `F-05` contributed 11 of those in PR #54, which merged after the rest of this matrix was written; the 87/87 across 13 files quoted until that point was the baseline it was measured against.
+> **Note on Test Counts:** On `origin/staging`, the regression test suite stands at **112/112 passing tests across 15 test files**. `F-05` contributed 11 of those and `F-06` a further 14, each added as its own suite. The 87/87 across 13 files quoted before `F-05` merged was the Sprint 1 and `F-08` baseline both were measured against.
 
 ---
 
@@ -40,7 +40,7 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 | `FR-04` Reviewer sees assigned requests | `F-03` | 1 | `AC-20` .. `AC-24`, `AC-28` .. `AC-28g` | `TEST-20` .. `TEST-24`, `TEST-28` .. `TEST-28g` | `verified` (81/81 baseline, PR #11) |
 | `FR-05` Approve or reject with reason | `F-04` | 1 | `AC-30`, `AC-36` | `TEST-30` .. `TEST-30c`, `TEST-36`, `TEST-E2E-02` | `verified` (Reason mandatory for both outcomes, PR #14) |
 | `FR-06` Return and resubmission workflow | `F-05` | 2 | `AC-50` .. `AC-59` | `TEST-50` .. `TEST-59` | `verified` (11 tests pass in `tests/api/request-return-resubmit.test.ts`, with `AC-58` carried by the existing `TEST-15`; contract `docs/sprints/sprint-2/F-05-return-resubmit.md`, Issue #45, merged in PR #54) |
-| `FR-07` Second stage approval for high amounts | `F-06` | 2 | `AC-60` .. `AC-65` | `TEST-60` .. `TEST-65` | `specified` (Contract `docs/sprints/sprint-2/F-06-second-approval.md`; threshold strictly `> 50,000.00 THB` under `DEC-08`) |
+| `FR-07` Second stage approval for high amounts | `F-06` | 2 | `AC-60` .. `AC-69` | `TEST-60` .. `TEST-69`, plus `TEST-60b`, `TEST-62b`, `TEST-66b`, `TEST-67b` | `verified` (14 tests pass in `tests/api/requests-second-approval.test.ts`; `TEST-69b` is the manual interface check the contract specifies; threshold strictly `> 50,000.00 THB` under `DEC-08`) |
 | `FR-08` Multi-criteria search, filter, and pagination | `F-07` | 2 | `AC-70` .. `AC-77` | `TEST-70` .. `TEST-76b`, `TEST-78`, `TEST-79` | `verified` (10/10 tests pass; UI filters verified, PR #41, #44) |
 | `FR-09` Department expense summaries and analytics | `F-08` | 3 | `AC-80` .. `AC-86` | `TEST-80` .. `TEST-85` | `verified` (6/6 tests pass; interactive UI dashboard at `/reports`; enforces `SR-04` Decimal accumulation, PR #46) |
 | `FR-10` Financial report export (CSV/JSON) | `F-09` | 3 | `AC-90` .. `AC-95` | `TEST-90` .. `TEST-95` | `specified` (Contract committed in `docs/sprints/sprint-3/F-09-financial-export.md`) |
@@ -58,7 +58,7 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 | `BR-06` Sequential request numbering | `F-02` | 1 | `AC-10` | `TEST-10`, `TEST-10b` | `verified` (Prefix EXP-YYYYMM-XXXX) |
 | `BR-07` Return requires explanatory reason | `F-05` | 2 | `AC-51`, `AC-52` | `TEST-51`, `TEST-52` | `verified` (both sides of the boundary are exercised: `TEST-51` at nine characters is refused, `TEST-52` at exactly ten is accepted. Approve and reject keep the 5 character rule) |
 | `BR-08` Resubmission authorization | `F-05` | 2 | `AC-55`, `AC-57` | `TEST-55`, `TEST-57` | `verified` (only the original requester may edit and resubmit, and both transitions are written to `ApprovalHistory`) |
-| `BR-09` Dual control threshold (> 50,000.00 THB) | `F-06` | 2 | `AC-60` .. `AC-63` | `TEST-60` .. `TEST-63` | `specified` (Strict inequality `totalAmount > 50,000.00 THB` routes to `PENDING_SECOND_APPROVAL`; boundary claims `<= 50,000.00 THB` approved in single stage under `DEC-08`) |
+| `BR-09` Dual control threshold (> 50,000.00 THB) | `F-06` | 2 | `AC-60` .. `AC-63`, `AC-66`, `AC-67` | `TEST-60`, `TEST-60b`, `TEST-61`, `TEST-62`, `TEST-63`, `TEST-66`, `TEST-66b`, `TEST-67`, `TEST-67b` | `verified` (both sides of the boundary are exercised one satang apart, and the dual control refusals are 403 `FORBIDDEN` under the `DEC-06` order rather than a new error code) |
 | `BR-10` Financial export role restriction | `F-09` | 3 | `AC-91` | `TEST-91` | `specified` (Reviewer/Admin only; 403 on requester per `F-09-financial-export.md`) |
 
 ### 2.3 Non-Functional Requirements & Cross-Cutting Responsibilities
@@ -74,7 +74,7 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 | `SR-02` Standard error envelope | Core | 1 | All negative AC | `{ success: false, error: { message, code } }` | `verified` (Universal error schema) |
 | `SR-03` Append-only audit history | Core | 1 | `AC-30`, `AC-36` | `ApprovalHistory` rows created, never deleted | `verified` (Audit trail integrity) |
 | `SR-04` Monetary precision (`Decimal(12,2)`) | Core | 1, 3 | `TEST-12`, `TEST-20b`, `TEST-84`, `TEST-85` | Prisma Decimal mapping; no float arithmetic in route handlers; strings end-to-end on wire | `verified` (PR #8, PR #11, PR #46 commit `484a4b3`) |
-| `SR-05` Immutability of terminal audit trail | Core | 2 | `AC-30`, `AC-36`, `AC-57`, `AC-64` | `TEST-57`, `TEST-64` | Verification scheduled with Sprint 2 integration of F-05 and F-06 | `specified` |
+| `SR-05` Immutability of terminal audit trail | Core | 2 | `AC-30`, `AC-36`, `AC-57`, `AC-68` | `TEST-57`, `TEST-68` | Every transition appends a row and none is ever rewritten, across both the `F-05` and `F-06` paths | `verified` |
 
 ---
 
@@ -185,12 +185,17 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 *Specification: `docs/sprints/sprint-2/F-06-second-approval.md` (Issue #47)*
 | AC | Test ID | Level | Target Test File | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| `AC-60` Single approval for boundary claim <= 50,000.00 THB | `TEST-60` | API | `tests/api/requests-second-approval.test.ts` | `specified` |
-| `AC-61` First approval for claim > 50,000.00 moves to PENDING_SECOND_APPROVAL | `TEST-61` | API | `tests/api/requests-second-approval.test.ts` | `specified` |
-| `AC-62` Second approval by distinct reviewer moves to APPROVED | `TEST-62` | API | `tests/api/requests-second-approval.test.ts` | `specified` |
-| `AC-63` Refusal of duplicate approver: Reviewer 2 cannot be Reviewer 1 (400) | `TEST-63` | API | `tests/api/requests-second-approval.test.ts` | `specified` |
-| `AC-64` History logs both first and second stage approval records | `TEST-64` | API | `tests/api/requests-second-approval.test.ts` | `specified` |
-| `AC-65` Rejection at second stage moves claim directly to REJECTED | `TEST-65` | API | `tests/api/requests-second-approval.test.ts` | `specified` |
+| `AC-60` A claim of exactly 50,000.00 stays on the single stage path | `TEST-60`, `TEST-60b` | API | `tests/api/requests-second-approval.test.ts` | `verified` |
+| `AC-61` A claim above the boundary moves to PENDING_SECOND_APPROVAL | `TEST-61` | API | `tests/api/requests-second-approval.test.ts` | `verified` |
+| `AC-62` The named second reviewer approves, and can read the claim | `TEST-62`, `TEST-62b` | API | `tests/api/requests-second-approval.test.ts` | `verified` |
+| `AC-63` The first reviewer cannot approve twice, 403 FORBIDDEN under DEC-06 | `TEST-63` | API | `tests/api/requests-second-approval.test.ts` | `verified` |
+| `AC-64` Rejection at the second stage moves the claim to REJECTED | `TEST-64` | API | `tests/api/requests-second-approval.test.ts` | `verified` |
+| `AC-65` The requester cannot approve at either stage, 403 SELF_APPROVAL | `TEST-65` | API | `tests/api/requests-second-approval.test.ts` | `verified` |
+| `AC-66` A high value approval must name a second reviewer, who must hold REVIEWER | `TEST-66`, `TEST-66b` | API | `tests/api/requests-second-approval.test.ts` | `verified` |
+| `AC-67` Neither the first reviewer nor the requester may be named | `TEST-67`, `TEST-67b` | API | `tests/api/requests-second-approval.test.ts` | `verified` |
+| `AC-68` Both stages are written to the audit trail | `TEST-68` | API | `tests/api/requests-second-approval.test.ts` | `verified` |
+| `AC-69` The queue rule holds for the second reviewer alone | `TEST-69` | Unit | `src/lib/review-queue.ts` via `tests/api/requests-second-approval.test.ts`. The helper is not imported by any source file, so this proves the rule and not the screen | `verified` |
+| `AC-69` The second reviewer completes the journey on screen | `TEST-69b` | UI | Manual check, dated evidence in `docs/evidence/` | `verified` |
 
 ---
 
@@ -239,10 +244,10 @@ In accordance with Deliverable 2 §3.4 and §5, coverage distinguishes between *
 
 | Category | Total Defined | Contract Specified | Executed & Verified | Specification Coverage | Execution Coverage |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Functional Requirements (FR)** | 10 | 10 | 8 (`FR-01` .. `FR-06`, `FR-08`, `FR-09`) | **100.0%** (10/10) | **80.0%** (8/10) |
-| **Business Rules (BR)** | 11 | 11 | 9 (`BR-01` .. `BR-08`) | **100.0%** (11/11) | **81.8%** (9/11) |
+| **Functional Requirements (FR)** | 10 | 10 | 9 (`FR-01` .. `FR-09`) | **100.0%** (10/10) | **90.0%** (9/10) |
+| **Business Rules (BR)** | 11 | 11 | 10 (`BR-01` .. `BR-09`) | **100.0%** (11/11) | **90.9%** (10/11) |
 | **Non-Functional Requirements (NFR)** | 5 | 5 | 4 (`NFR-01` .. `NFR-03`, `NFR-05`) | **100.0%** (5/5) | **80.0%** (4/5) |
-| **System Responsibilities (SR)** | 5 | 5 | 4 (`SR-01` .. `SR-04`) | **100.0%** (5/5) | **80.0%** (4/5) |
+| **System Responsibilities (SR)** | 5 | 5 | 5 (`SR-01` .. `SR-05`) | **100.0%** (5/5) | **100.0%** (5/5) |
 
 ### 4.2 Explicit Coverage Gaps & Deferred Verification
 
@@ -250,12 +255,9 @@ The following requirements have complete specifications committed in repository 
 
 | Requirement | Feature | Owner | Target Test Suite | Scheduled Milestone |
 | :--- | :--- | :--- | :--- | :--- |
-| `FR-07` High-value second approval workflow | `F-06` | `siripitch-c` | `tests/api/requests-second-approval.test.ts` (`TEST-60` .. `TEST-65`) | Sprint 2 Candidate |
 | `FR-10` Financial report export (CSV) | `F-09` | `KaiDaoMuKrobb` | `tests/api/reports-export.test.ts` (`TEST-90` .. `TEST-95`) | Sprint 3 Candidate |
-| `BR-09` Dual control threshold (> 50,000.00 THB) | `F-06` | `siripitch-c` | `tests/api/requests-second-approval.test.ts` (`TEST-60` .. `TEST-63`) | Sprint 2 Candidate |
 | `BR-10` Financial export role restriction (Reviewer only) | `F-09` | `KaiDaoMuKrobb` | `tests/api/reports-export.test.ts` (`TEST-91`) | Sprint 3 Candidate |
 | `NFR-04` Responsive layout (mobile/tablet/desktop) | `F-10` | `siripitch-c` | Chrome DevTools viewport audit (`AC-100` .. `AC-101`) | Sprint 3 Candidate |
-| `SR-05` Immutability of terminal audit trail | Core | Both | `tests/api/request-return-resubmit.test.ts`, `requests-second-approval.test.ts` | Sprint 2 Candidate |
 
 ---
 
