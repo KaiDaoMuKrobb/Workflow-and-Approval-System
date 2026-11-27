@@ -97,9 +97,14 @@ All business rules are enforced exclusively at the **Application / Server Layer 
 - **`BR-02 (State Transition Validation)`**:  
   Status changes must strictly follow the defined state machine:
   $$\text{DRAFT} \longleftrightarrow \text{SUBMITTED} \longrightarrow \text{APPROVED} \mid \text{REJECTED}$$
+  $$\text{SUBMITTED} \longleftrightarrow \text{RETURNED}$$
+  A reviewer may return a `SUBMITTED` request for revision instead of deciding it (`FR-06`, `BR-07`), and its
+  requester may then edit and resubmit it (`BR-08`). `RETURNED` is not a terminal state, is reachable only from
+  `SUBMITTED`, and leads only back to `SUBMITTED`.
   Requests in terminal states (`APPROVED` or `REJECTED`) are immutable. Any transition attempt on a terminal request must be rejected with **HTTP 400 Bad Request** (`INVALID_TRANSITION`).
 - **`BR-03 (Immutability After Submission)`**:  
-  Once a request transitions to `SUBMITTED`, the requester cannot modify, add, or remove line items or request header fields. Modification attempts must be rejected with **HTTP 400 Bad Request** (`IMMUTABLE_AFTER_SUBMIT`).
+  Once a request transitions to `SUBMITTED`, the requester cannot modify, add, or remove line items or request header fields. Modification attempts must be rejected with **HTTP 400 Bad Request** (`IMMUTABLE_AFTER_SUBMIT`). This holds for `SUBMITTED`, `APPROVED` and `REJECTED`.
+  It does not hold for `RETURNED`. A request a reviewer has returned is editable by its original requester under `BR-08`, which is the single exception this rule admits and the narrowing `FR-06` introduces. The claim becomes immutable again as soon as it is resubmitted.
 - **`BR-04 (Authoritative Amount Calculation & Line Item Validation)`**:  
   - The request `totalAmount` must be calculated on the server by summing `ExpenseItem.amount`. Client-submitted totals are ignored.
   - Every line item amount must be strictly greater than zero ($amount > 0$).

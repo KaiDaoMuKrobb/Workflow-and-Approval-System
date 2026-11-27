@@ -1,15 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle2, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Undo2, AlertTriangle, Loader2 } from 'lucide-react';
 import {
   MIN_DECISION_COMMENT_LENGTH,
   DECISION_COMMENT_REQUIRED_MESSAGE,
+  MIN_RETURN_COMMENT_LENGTH,
+  RETURN_COMMENT_REQUIRED_MESSAGE,
 } from '@/lib/review-rules';
+
+type ReviewAction = 'APPROVE' | 'REJECT' | 'RETURN';
 
 export interface ReviewTarget {
   id: string;
-  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RETURNED';
   requesterId: string;
   assignedReviewerId: string | null;
 }
@@ -33,7 +37,7 @@ export default function ReviewDecisionPanel({
   onDecided?: () => void;
 }) {
   const [comment, setComment] = useState('');
-  const [busy, setBusy] = useState<'APPROVE' | 'REJECT' | null>(null);
+  const [busy, setBusy] = useState<ReviewAction | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Until /api/auth/me resolves there is nobody to check against, so nothing is
@@ -46,13 +50,22 @@ export default function ReviewDecisionPanel({
   // BR-02, on screen. Nothing but a submitted request can be decided.
   if (request.status !== 'SUBMITTED') return null;
 
-  async function decide(action: 'APPROVE' | 'REJECT') {
+  async function decide(action: ReviewAction) {
     setError(null);
 
     // Checked here as well as by the API so the reviewer is told before a round
-    // trip, not after one. FR-05 requires a reason for both decisions.
-    if (comment.trim().length < MIN_DECISION_COMMENT_LENGTH) {
-      setError(`${DECISION_COMMENT_REQUIRED_MESSAGE}.`);
+    // trip, not after one. FR-05 requires a reason for every decision, and
+    // BR-07 requires a longer one to return a claim, because that reason is the
+    // instruction the requester has to work from.
+    const isReturn = action === 'RETURN';
+    const minLength = isReturn
+      ? MIN_RETURN_COMMENT_LENGTH
+      : MIN_DECISION_COMMENT_LENGTH;
+
+    if (comment.trim().length < minLength) {
+      setError(
+        `${isReturn ? RETURN_COMMENT_REQUIRED_MESSAGE : DECISION_COMMENT_REQUIRED_MESSAGE}.`
+      );
       return;
     }
 
@@ -89,8 +102,9 @@ export default function ReviewDecisionPanel({
     >
       <h2 className="text-sm font-semibold text-slate-700">Your decision</h2>
       <p className="mt-1 text-sm text-slate-500">
-        A reason of at least {MIN_DECISION_COMMENT_LENGTH} characters is required, and is recorded
-        against your decision.
+        A reason of at least {MIN_DECISION_COMMENT_LENGTH} characters is required to approve or
+        reject, and at least {MIN_RETURN_COMMENT_LENGTH} to return the claim for revision. It is
+        recorded against your decision either way.
       </p>
 
       <label htmlFor="review-comment" className="sr-only">
@@ -103,7 +117,7 @@ export default function ReviewDecisionPanel({
         onChange={(e) => setComment(e.target.value)}
         disabled={disabled}
         rows={3}
-        placeholder="Why are you approving or rejecting this claim?"
+        placeholder="Why are you approving, rejecting or returning this claim?"
         className="mt-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-slate-50"
       />
 
@@ -147,6 +161,21 @@ export default function ReviewDecisionPanel({
             <XCircle className="h-4 w-4" aria-hidden="true" />
           )}
           Reject
+        </button>
+
+        <button
+          type="button"
+          data-testid="review-return"
+          onClick={() => decide('RETURN')}
+          disabled={disabled}
+          className="inline-flex items-center gap-2 rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-orange-300"
+        >
+          {busy === 'RETURN' ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Undo2 className="h-4 w-4" aria-hidden="true" />
+          )}
+          Return for revision
         </button>
       </div>
     </section>

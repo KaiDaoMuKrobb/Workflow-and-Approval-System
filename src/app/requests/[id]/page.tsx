@@ -34,7 +34,7 @@ interface RequestDetail {
   title: string;
   description: string;
   totalAmount: string;
-  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RETURNED';
   createdAt: string;
   updatedAt: string;
   requesterId: string;
@@ -50,6 +50,7 @@ const STATUS_STYLES: Record<RequestDetail['status'], string> = {
   SUBMITTED: 'bg-amber-100 text-amber-800',
   APPROVED: 'bg-emerald-100 text-emerald-800',
   REJECTED: 'bg-rose-100 text-rose-800',
+  RETURNED: 'bg-orange-100 text-orange-800',
 };
 
 export default function RequestDetailPage({ params }: { params: { id: string } }) {
