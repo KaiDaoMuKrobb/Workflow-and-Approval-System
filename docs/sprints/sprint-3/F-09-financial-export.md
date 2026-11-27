@@ -50,7 +50,7 @@
 
 #### Error Responses
 - **401 Unauthorized:** Missing or invalid session token (`UNAUTHENTICATED`).
-- **403 Forbidden:** User role is `REQUESTER` (`FORBIDDEN_ROLE`).
+- **403 Forbidden:** User role is `REQUESTER` (`FORBIDDEN`).
 - **400 Bad Request:** Invalid format or malformed date bounds (`VALIDATION_ERROR`).
 
 #### Successful Response Format (HTTP 200 OK)
@@ -69,7 +69,7 @@
 - **`AC-91` (Requester Role Refusal - BR-10):**  
   *Given* a user signed in as `REQUESTER` (e.g. `alice.req@test.com`)  
   *When* requesting `GET /api/reports/export`  
-  *Then* server returns HTTP 403 with code `FORBIDDEN_ROLE`.
+  *Then* server returns HTTP 403 with code `FORBIDDEN`.
 
 - **`AC-92` (Reviewer Export Access):**  
   *Given* an authenticated user with role `REVIEWER`  
@@ -103,7 +103,7 @@
 | Test ID | AC | Level | Description | Expected Outcome |
 | :--- | :--- | :--- | :--- | :--- |
 | **`TEST-90`** | `AC-90` | API | Unauthenticated export attempt | HTTP 401 `UNAUTHENTICATED` |
-| **`TEST-91`** | `AC-91` | API | Requester role export attempt | HTTP 403 `FORBIDDEN_ROLE` |
+| **`TEST-91`** | `AC-91` | API | Requester role export attempt | HTTP 403 `FORBIDDEN` |
 | **`TEST-92`** | `AC-92` | API | Reviewer role CSV export download | HTTP 200, text/csv content type |
 | **`TEST-93`** | `AC-93` | API | Date-filtered export accuracy | HTTP 200, records bounded by date params |
 | **`TEST-94`** | `AC-94` | Unit | CSV string escaping utility | Special characters correctly escaped |
