@@ -24,7 +24,7 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 | `in-progress` | Implementation or code review currently active on a dedicated feature branch. |
 | `planned` | Allocated to a sprint; criteria and schema will be elaborated as that increment starts. |
 
-> **Note on Test Counts:** On `origin/staging`, the baseline regression test suite stands at 81/81 passing tests (PR #6, #8, #11, #14, #41, #44). With `F-08` Department Expense Summaries & Analytics (PR #46) adding 6 automated tests, the candidate test suite executes at 87/87 passing tests on `npm test` across 13 test files. Per agreed release sequencing, PR #46 merges first into `staging`, immediately establishing the 87/87 baseline for this matrix.
+> **Note on Test Counts:** On `origin/staging`, the baseline regression test suite stands at 87/87 passing tests across 13 test files (PR #6, #8, #11, #14, #41, #44, #46, #53). With `F-05` Return & Resubmission (PR #54) adding 11 automated tests, the candidate test suite executes at 98/98 passing tests on `npm test` across 14 test files.
 
 ---
 
@@ -56,8 +56,8 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 | `BR-05` Access isolation (read) | `F-03` | 1 | `AC-21`, `AC-26`, `AC-27`, `AC-34` | `TEST-21`, `TEST-26`, `TEST-27`, `TEST-34` | `verified` (404 zero-knowledge privacy) |
 | `BR-05` Access isolation (decide) | `F-04` | 1 | `AC-33` | `TEST-33`, `TEST-33b`, `TEST-39d` | `verified` (403 assigned reviewer only) |
 | `BR-06` Sequential request numbering | `F-02` | 1 | `AC-10` | `TEST-10`, `TEST-10b` | `verified` (Prefix EXP-YYYYMM-XXXX) |
-| `BR-07` Return requires explanatory reason | `F-05` | 2 | `AC-51` | `TEST-51` | `specified` (Min 10 characters trimmed per `docs/srs.md:116` & F-05 contract §2.1; approve/reject uses 5 chars) |
-| `BR-08` Resubmission authorization | `F-05` | 2 | `AC-54`, `AC-55`, `AC-56` | `TEST-54`, `TEST-55`, `TEST-56` | `specified` (Only original requester can edit and resubmit request in `RETURNED` status per `docs/srs.md:117-118`) |
+| `BR-07` Return requires explanatory reason | `F-05` | 2 | `AC-51`, `AC-52` | `TEST-51`, `TEST-52` | `specified` (Min 10 characters trimmed per `docs/srs.md:116` & F-05 contract §2.1; approve/reject uses 5 chars) |
+| `BR-08` Resubmission authorization | `F-05` | 2 | `AC-55`, `AC-57` | `TEST-55`, `TEST-57` | `specified` (Only original requester can edit and resubmit request in `RETURNED` status per `docs/srs.md:117-118`) |
 | `BR-09` Dual control threshold (> 50,000.00 THB) | `F-06` | 2 | `AC-60` .. `AC-63` | `TEST-60` .. `TEST-63` | `specified` (Strict inequality `totalAmount > 50,000.00 THB` routes to `PENDING_SECOND_APPROVAL`; boundary claims `<= 50,000.00 THB` approved in single stage under `DEC-08`) |
 | `BR-10` Financial export role restriction | `F-09` | 3 | `AC-91` | `TEST-91` | `specified` (Reviewer/Admin only; 403 on requester per `F-09-financial-export.md`) |
 
@@ -170,16 +170,16 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 *Specification: `docs/sprints/sprint-2/F-05-return-resubmit.md` (Issue #45)*
 | AC | Test ID | Level | Target Test File | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| `AC-50` Assigned reviewer returns SUBMITTED request | `TEST-50` | API | `tests/api/requests-return.test.ts` | `specified` |
-| `AC-51` Return requires non-empty comment >= 10 chars (BR-07) | `TEST-51` | API | `tests/api/requests-return.test.ts` | `specified` |
-| `AC-52` Disallowed transitions to RETURNED refused (BR-02) | `TEST-52` | API | `tests/api/requests-return.test.ts` | `specified` |
-| `AC-53` Unassigned reviewer return refused with 403 (BR-05) | `TEST-53` | API | `tests/api/requests-return.test.ts` | `specified` |
-| `AC-54` Editing reopened while RETURNED (BR-03 narrowed) | `TEST-54`, `TEST-54b` | API | `tests/api/requests-return.test.ts` | `specified` |
-| `AC-55` Non-owner editing or reading returned claim gets 404 | `TEST-55` | API | `tests/api/requests-return.test.ts` | `specified` |
-| `AC-56` Requester resubmits returned claim (RETURNED -> SUBMITTED) | `TEST-56`, `TEST-56b` | API | `tests/api/requests-return.test.ts` | `specified` |
-| `AC-57` Resubmission writes accurate audit history row (RESUBMIT) | `TEST-57` | API | `tests/api/requests-return.test.ts` | `specified` |
-| `AC-58` Self-assignment refused on resubmission (DEC-02 v2.0) | `TEST-58` | API | `tests/api/requests-return.test.ts` | `specified` |
-| `AC-59` Resubmission with empty line items refused (BR-04) | `TEST-59` | API | `tests/api/requests-return.test.ts` | `specified` |
+| `AC-50` Assigned reviewer returns SUBMITTED request | `TEST-50` | API | `tests/api/request-return-resubmit.test.ts` | `specified` |
+| `AC-51` Return requires non-empty comment >= 10 chars (BR-07) | `TEST-51` | API | `tests/api/request-return-resubmit.test.ts` | `specified` |
+| `AC-52` Return reason exactly at boundary (10 chars) succeeds (BR-07) | `TEST-52` | API | `tests/api/request-return-resubmit.test.ts` | `specified` |
+| `AC-53` Unassigned reviewer return refused with 403 (BR-05) | `TEST-53` | API | `tests/api/request-return-resubmit.test.ts` | `specified` |
+| `AC-54` Editing reopened while RETURNED (BR-03 narrowed) | `TEST-54`, `TEST-54b` | API | `tests/api/request-return-resubmit.test.ts` | `specified` |
+| `AC-55` Non-owner editing or reading returned claim gets 404 (BR-08) | `TEST-55` | API | `tests/api/request-return-resubmit.test.ts` | `specified` |
+| `AC-56` Requester resubmits returned claim (RETURNED -> SUBMITTED) | `TEST-56`, `TEST-56b` | API | `tests/api/request-return-resubmit.test.ts` | `specified` |
+| `AC-57` Resubmission writes accurate audit history row (RESUBMIT) (BR-08) | `TEST-57` | API | `tests/api/request-return-resubmit.test.ts` | `specified` |
+| `AC-58` Editing submitted request refused, BR-03 preserved | `TEST-15` | API | `tests/api/request-crud.test.ts` | `verified` |
+| `AC-59` Returning request not in SUBMITTED status refused (BR-02) | `TEST-59` | API | `tests/api/request-return-resubmit.test.ts` | `specified` |
 
 #### `F-06` Second Stage Approval for High Amounts (siripitch-c)
 *Specification: `docs/sprints/sprint-2/F-06-second-approval.md` (Issue #47)*
@@ -250,15 +250,15 @@ The following requirements have complete specifications committed in repository 
 
 | Requirement | Feature | Owner | Target Test Suite | Scheduled Milestone |
 | :--- | :--- | :--- | :--- | :--- |
-| `FR-06` Return and resubmission workflow | `F-05` | `siripitch-c` | `tests/api/requests-return.test.ts` (`TEST-50` .. `TEST-59`) | Sprint 2 Candidate |
+| `FR-06` Return and resubmission workflow | `F-05` | `siripitch-c` | `tests/api/request-return-resubmit.test.ts` (`TEST-50` .. `TEST-59`) | Sprint 2 Candidate |
 | `FR-07` High-value second approval workflow | `F-06` | `siripitch-c` | `tests/api/requests-second-approval.test.ts` (`TEST-60` .. `TEST-65`) | Sprint 2 Candidate |
 | `FR-10` Financial report export (CSV) | `F-09` | `KaiDaoMuKrobb` | `tests/api/reports-export.test.ts` (`TEST-90` .. `TEST-95`) | Sprint 3 Candidate |
-| `BR-07` Return requires explanatory reason (>= 10 chars) | `F-05` | `siripitch-c` | `tests/api/requests-return.test.ts` (`TEST-51`) | Sprint 2 Candidate |
-| `BR-08` Resubmission authorization by original requester | `F-05` | `siripitch-c` | `tests/api/requests-return.test.ts` (`TEST-54`, `TEST-56`) | Sprint 2 Candidate |
+| `BR-07` Return requires explanatory reason (>= 10 chars) | `F-05` | `siripitch-c` | `tests/api/request-return-resubmit.test.ts` (`TEST-51`, `TEST-52`) | Sprint 2 Candidate |
+| `BR-08` Resubmission authorization by original requester | `F-05` | `siripitch-c` | `tests/api/request-return-resubmit.test.ts` (`TEST-55`, `TEST-57`) | Sprint 2 Candidate |
 | `BR-09` Dual control threshold (> 50,000.00 THB) | `F-06` | `siripitch-c` | `tests/api/requests-second-approval.test.ts` (`TEST-60` .. `TEST-63`) | Sprint 2 Candidate |
 | `BR-10` Financial export role restriction (Reviewer only) | `F-09` | `KaiDaoMuKrobb` | `tests/api/reports-export.test.ts` (`TEST-91`) | Sprint 3 Candidate |
 | `NFR-04` Responsive layout (mobile/tablet/desktop) | `F-10` | `siripitch-c` | Chrome DevTools viewport audit (`AC-100` .. `AC-101`) | Sprint 3 Candidate |
-| `SR-05` Immutability of terminal audit trail | Core | Both | `tests/api/requests-return.test.ts`, `requests-second-approval.test.ts` | Sprint 2 Candidate |
+| `SR-05` Immutability of terminal audit trail | Core | Both | `tests/api/request-return-resubmit.test.ts`, `requests-second-approval.test.ts` | Sprint 2 Candidate |
 
 ---
 
