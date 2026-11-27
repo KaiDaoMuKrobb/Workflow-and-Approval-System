@@ -20,11 +20,15 @@ describe('Feature F-04: Decision controls on the detail page (AC-39)', () => {
   const ALICE = 'user-alice';
   const DAVID = 'user-david';
 
+  // F-06 added totalAmount to ReviewTarget, because BR-09 decides from it
+  // whether approving escalates or finishes. 1,500.00 keeps every case in this
+  // file on the single stage path it was written for, so no assertion changes.
   const submittedToCarol: ReviewTarget = {
     id: 'req-1',
     status: 'SUBMITTED',
     requesterId: ALICE,
     assignedReviewerId: CAROL,
+    totalAmount: '1500.00',
   };
 
   it('TEST-39 / AC-39: an already approved request offers no controls', () => {

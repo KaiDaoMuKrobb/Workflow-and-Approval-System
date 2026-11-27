@@ -30,6 +30,12 @@ export async function GET(
         assignedReviewer: {
           select: { id: true, name: true, email: true },
         },
+        // F-06. The detail page names the reviewer a high value claim was
+        // escalated to, and canViewRequest already admits them, so the record
+        // has to carry them as well as the first reviewer.
+        secondReviewer: {
+          select: { id: true, name: true, email: true },
+        },
         history: {
           include: {
             actor: {
