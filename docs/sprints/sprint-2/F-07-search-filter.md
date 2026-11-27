@@ -1,4 +1,4 @@
-# F-07 — Multi-Criteria Filtering, Search & Pagination
+# F-07: Multi-Criteria Filtering, Search & Pagination
 
 > **Feature Engineering Contract (Part E)** · Sprint 2 · Owner: **KaiDaoMuKrobb (Pattarawadee Thanapoomthakul)** · Issue #43  
 > Branch: `feat/F-07-search-filter`  
@@ -194,3 +194,19 @@ Returned when validation constraints are violated:
 | :--- | :--- | :--- | :--- |
 | 1.0 | 24 Nov 2026 | KaiDaoMuKrobb | Initial contract specification for `F-07` Multi-criteria search, filter, and pagination before implementation. |
 | 1.1 | 25 Nov 2026 | KaiDaoMuKrobb | Revised under PR #41 peer review: added `queue=true` server-side reviewer queue support, database `groupBy` exact stats, strict category/page validation, renumbered `TEST-78`/`TEST-79`, added `NFR-03` latency benchmark, corrected schema index statements, and pointed to Issue #43. |
+| 1.2 | 28 Nov 2026 | KaiDaoMuKrobb | Added explicit Definition of Done checklist in Section 7 per Deliverable 2 Section 3.2 Part B criteria. |
+
+---
+
+## 7. Definition of Done (DoD)
+
+1. Contract specified and approved under peer review (PR #41) prior to implementation.
+2. TDD automated test suite implemented covering single-criteria, multi-criteria, access isolation, validation, and performance (`TEST-70` to `TEST-76b`, `TEST-78`, `TEST-79`).
+3. Database indexes established on frequently filtered columns (`status`, `requesterId`, `assignedReviewerId`) satisfying `NFR-03`.
+4. Multi-criteria query builder supporting case-insensitive keyword search, category matching, date boundaries, and pagination implemented in `src/app/api/requests/route.ts`.
+5. Strict `DEC-06` error envelopes returning 400 `VALIDATION_ERROR` on malformed query parameters.
+6. Zero-knowledge privacy maintained under search (`BR-05`, `AC-76`).
+7. Interactive client-side UI filters, active filter chips, search input, and responsive pagination integrated into `/requests` and `/reviewer/dashboard`.
+8. Performance benchmark verified under 500 ms response latency (`NFR-03`, `TEST-79`).
+9. Requirements Traceability Matrix updated with bidirectional mappings for `FR-08` and `AC-70` to `AC-77`.
+10. Code review completed, PR #41 merged into `staging`, and released on `main` under PR #44 (`v0.2.0`).

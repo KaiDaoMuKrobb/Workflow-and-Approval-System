@@ -116,3 +116,11 @@
 1. Contract reviewed and approved by peer engineer.
 2. Verified against `BR-10` authorization requirements.
 3. Tests defined and ready for Sprint 3 implementation phase.
+
+---
+
+## 7. Revision History
+| Version | Date | Author | Summary of Changes |
+| :--- | :--- | :--- | :--- |
+| 1.0 | 25 Nov 2026 | KaiDaoMuKrobb | Initial contract specification for `F-09` Financial Report Export (CSV/JSON) before implementation. |
+| 1.1 | 26 Nov 2026 | KaiDaoMuKrobb | Aligned authorization rules with `BR-10` (Reviewer-only access) and defined streaming response constraints (`TEST-90` to `TEST-96`). |
