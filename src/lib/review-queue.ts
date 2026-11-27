@@ -12,8 +12,17 @@
  */
 
 export interface QueueCandidate {
-  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RETURNED';
+  status:
+    | 'DRAFT'
+    | 'SUBMITTED'
+    | 'APPROVED'
+    | 'REJECTED'
+    | 'RETURNED'
+    | 'PENDING_SECOND_APPROVAL';
   assignedReviewer?: { id: string } | null;
+  // F-06: the reviewer named for the second stage. Null on every single
+  // stage claim, and never null while the status is PENDING_SECOND_APPROVAL.
+  secondReviewer?: { id: string } | null;
   requester?: { id: string } | null;
 }
 
