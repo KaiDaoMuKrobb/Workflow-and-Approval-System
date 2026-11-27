@@ -98,9 +98,14 @@ All business rules are enforced exclusively at the **Application / Server Layer 
   Status changes must strictly follow the defined state machine:
   $$\text{DRAFT} \longleftrightarrow \text{SUBMITTED} \longrightarrow \text{APPROVED} \mid \text{REJECTED}$$
   $$\text{SUBMITTED} \longleftrightarrow \text{RETURNED}$$
+  $$\text{SUBMITTED} \longrightarrow \text{PENDING\_SECOND\_APPROVAL} \longrightarrow \text{APPROVED} \mid \text{REJECTED}$$
   A reviewer may return a `SUBMITTED` request for revision instead of deciding it (`FR-06`, `BR-07`), and its
   requester may then edit and resubmit it (`BR-08`). `RETURNED` is not a terminal state, is reachable only from
   `SUBMITTED`, and leads only back to `SUBMITTED`.
+  A first approval of a request above the `BR-09` threshold moves it to `PENDING_SECOND_APPROVAL` rather than to
+  `APPROVED` (`FR-07`). That state is reachable only from `SUBMITTED`, is not terminal, and leads only to
+  `APPROVED` or `REJECTED` through a second reviewer. It cannot be returned for revision, because the first
+  approval it already carries would be invalidated.
   Requests in terminal states (`APPROVED` or `REJECTED`) are immutable. Any transition attempt on a terminal request must be rejected with **HTTP 400 Bad Request** (`INVALID_TRANSITION`).
 - **`BR-03 (Immutability After Submission)`**:  
   Once a request transitions to `SUBMITTED`, the requester cannot modify, add, or remove line items or request header fields. Modification attempts must be rejected with **HTTP 400 Bad Request** (`IMMUTABLE_AFTER_SUBMIT`). This holds for `SUBMITTED`, `APPROVED` and `REJECTED`.
