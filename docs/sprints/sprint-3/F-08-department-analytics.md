@@ -46,7 +46,7 @@
 
 #### Authentication & Authorization Guards
 1. Caller must present a valid JWT session cookie. Unauthenticated requests return HTTP 401 `UNAUTHENTICATED`.
-2. Caller role must be `REVIEWER` or `ADMIN`. Requesters return HTTP 403 `FORBIDDEN` with error code `FORBIDDEN_ROLE`.
+2. Caller role must be `REVIEWER`. Requesters return HTTP 403 `FORBIDDEN` with error code `FORBIDDEN`.
 
 #### Successful Response Format (HTTP 200 OK)
 ```json
@@ -54,36 +54,36 @@
   "success": true,
   "data": {
     "summary": {
-      "totalApprovedAmount": 75400.00,
+      "totalApprovedAmount": "75400.00",
       "totalApprovedClaims": 4,
       "activeDepartmentCount": 2
     },
     "byDepartment": [
       {
         "department": "Engineering",
-        "totalAmount": 54200.00,
+        "totalAmount": "54200.00",
         "claimCount": 3
       },
       {
         "department": "Design",
-        "totalAmount": 21200.00,
+        "totalAmount": "21200.00",
         "claimCount": 1
       }
     ],
     "byCategory": [
       {
         "category": "TRAVEL",
-        "totalAmount": 38500.00,
+        "totalAmount": "38500.00",
         "percentage": 51.06
       },
       {
         "category": "EQUIPMENT",
-        "totalAmount": 24500.00,
+        "totalAmount": "24500.00",
         "percentage": 32.49
       },
       {
         "category": "MEALS",
-        "totalAmount": 12400.00,
+        "totalAmount": "12400.00",
         "percentage": 16.45
       }
     ],
@@ -91,7 +91,7 @@
       {
         "year": 2026,
         "month": 11,
-        "totalAmount": 75400.00,
+        "totalAmount": "75400.00",
         "claimCount": 4
       }
     ]
@@ -111,9 +111,9 @@
 - **`AC-81` (Role Authorization Guard):**  
   *Given* a user signed in as `REQUESTER` (e.g. `alice.req@test.com`)  
   *When* requesting `GET /api/reports/summary`  
-  *Then* server returns HTTP 403 with code `FORBIDDEN_ROLE`.
+  *Then* server returns HTTP 403 with code `FORBIDDEN`.
 
-- **`AC-82` (Reviewer and Admin Access):**  
+- **`AC-82` (Reviewer Role Access):**  
   *Given* a user signed in as `REVIEWER` (e.g. `carol.mgr@test.com`) or dual-role (`david.both@test.com`)  
   *When* requesting `GET /api/reports/summary`  
   *Then* server returns HTTP 200 with complete summary payload.
@@ -145,7 +145,7 @@
 | Test ID | AC | Level | Description | Expected Outcome |
 | :--- | :--- | :--- | :--- | :--- |
 | **`TEST-80`** | `AC-80` | API | Unauthenticated request to `/api/reports/summary` | HTTP 401 `UNAUTHENTICATED` |
-| **`TEST-81`** | `AC-81` | API | Requester role attempting to read analytics | HTTP 403 `FORBIDDEN_ROLE` |
+| **`TEST-81`** | `AC-81` | API | Requester role attempting to read analytics | HTTP 403 `FORBIDDEN` |
 | **`TEST-82`** | `AC-82` | API | Reviewer role reading analytics | HTTP 200 with summary data structure |
 | **`TEST-83`** | `AC-83` | API | Excludes DRAFT, SUBMITTED, and REJECTED claims | HTTP 200, totals reflect APPROVED claims only |
 | **`TEST-84`** | `AC-84` | API | Department aggregation calculation | HTTP 200, department totals match sum of claims |

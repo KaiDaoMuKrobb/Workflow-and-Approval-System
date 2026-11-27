@@ -100,7 +100,7 @@ erDiagram
         string actorId FK "User.id"
         enum fromStatus "RequestStatus"
         enum toStatus "RequestStatus"
-        string action "SUBMIT | APPROVE | REJECT"
+        string action "SUBMIT | APPROVE | REJECT | RETURN | RESUBMIT"
         string comment "Reviewer or Submitter note"
         datetime createdAt
     }
@@ -209,7 +209,7 @@ Every route handler executes an invariant 4-tier evaluation pipeline before acce
           │
           ▼
 4. Domain State Machine Guard ──(Illegal state transition)───> 400 INVALID_TRANSITION
-                              ──(Edit submitted request)────> 400 IMMUTABLE_AFTER_SUBMIT
+                              ──(Edit submitted request)────> 400 IMMUTABLE_AFTER_SUBMIT (unless RETURNED per BR-08)
                               ──(Self-assignment at submit)──> 400 SELF_ASSIGNMENT
                               ──(Invalid item/zero amount)───> 400 VALIDATION_ERROR
                               ──(Invalid login credentials)──> 400 INVALID_CREDENTIALS
@@ -229,7 +229,7 @@ Every route handler executes an invariant 4-tier evaluation pipeline before acce
 | `SELF_ASSIGNMENT` | Requester selecting themselves as the assigned reviewer at submission | 400 | `DEC-02` v2.0 |
 | `INVALID_TRANSITION` | Disallowed state machine transition attempt | 400 | `BR-02` |
 | `IMMUTABLE_AFTER_SUBMIT` | Attempting to modify a request after submission | 400 | `BR-03` |
-| `VALIDATION_ERROR` | Missing required fields, zero/negative line item amount | 400 | `BR-04` |
+| `VALIDATION_ERROR` | Missing required fields, zero/negative line item amount, short return reason | 400 | `BR-04`, `BR-07` |
 | `INVALID_CREDENTIALS` | Incorrect email or password during login | 400 | `FR-01`, `AC-02` |
 | `INTERNAL_ERROR` | Unhandled server exception or database failure | 500 | Robustness |
 
@@ -243,8 +243,8 @@ Every route handler executes an invariant 4-tier evaluation pipeline before acce
 | `/api/requests` (Create) | POST | ❌ | ✅ | ✅ | ✅ | ✅ |
 | `/api/requests` (List) | GET | ❌ | ✅ (Own items) | ❌ | ✅ (Assigned + Own) | ❌ |
 | `/api/requests/:id` (View) | GET | ❌ | ✅ | **404** | ✅ | **404** |
-| `/api/requests/:id` (Update) | PUT | ❌ | ✅ (`DRAFT` only) | **404** | ❌ (400) | **404** |
-| `/api/requests/:id/submit` | POST | ❌ | ✅ (`DRAFT` only) | **404** | ❌ (400) | **404** |
+| `/api/requests/:id` (Update) | PUT | ❌ | ✅ (`DRAFT` or `RETURNED`) | **404** | ❌ (400) | **404** |
+| `/api/requests/:id/submit` | POST | ❌ | ✅ (`DRAFT` or `RETURNED`) | **404** | ❌ (400) | **404** |
 | `/api/requests/:id/review` | POST | ❌ | ❌ (403) | ❌ (403) | ✅ (**No Self-Approval**) | **403** |
 
 ---

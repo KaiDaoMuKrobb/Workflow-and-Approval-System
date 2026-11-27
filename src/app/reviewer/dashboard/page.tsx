@@ -15,6 +15,7 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+  BarChart3,
 } from 'lucide-react';
 import ReviewerQueue, { QueueRequest } from '@/components/ReviewerQueue';
 
@@ -150,6 +151,13 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Link
+              href="/reports"
+              className="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition"
+            >
+              <BarChart3 className="h-4 w-4 text-indigo-600" aria-hidden="true" />
+              Analytics (FR-09)
+            </Link>
             <Link
               href="/requests"
               className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
