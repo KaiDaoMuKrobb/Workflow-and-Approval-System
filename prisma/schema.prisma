@@ -75,7 +75,7 @@ model ApprovalHistory {
   actor      User           @relation("ActorActions", fields: [actorId], references: [id])
   fromStatus RequestStatus
   toStatus   RequestStatus
-  action     String         // SUBMIT, APPROVE, REJECT
+  action     String         // SUBMIT, APPROVE, REJECT, RETURN, RESUBMIT
   comment    String?
   createdAt  DateTime       @default(now())
 

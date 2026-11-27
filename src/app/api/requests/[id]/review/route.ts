@@ -6,6 +6,8 @@ import { RequestStatus } from '@prisma/client';
 import {
   MIN_DECISION_COMMENT_LENGTH,
   DECISION_COMMENT_REQUIRED_MESSAGE,
+  MIN_RETURN_COMMENT_LENGTH,
+  RETURN_COMMENT_REQUIRED_MESSAGE,
 } from '@/lib/review-rules';
 
 export const dynamic = 'force-dynamic';
@@ -79,7 +81,7 @@ export async function POST(
     // permission never learns whether the request has already been decided.
     if (target.status !== RequestStatus.SUBMITTED) {
       return jsonError(
-        'Only a submitted request can be approved or rejected',
+        'Only a submitted request can be approved, rejected or returned',
         'INVALID_TRANSITION',
         400
       );
@@ -98,9 +100,9 @@ export async function POST(
       comment?: unknown;
     };
 
-    if (action !== 'APPROVE' && action !== 'REJECT') {
+    if (action !== 'APPROVE' && action !== 'REJECT' && action !== 'RETURN') {
       return jsonError(
-        'Action must be either APPROVE or REJECT',
+        'Action must be APPROVE, REJECT or RETURN',
         'VALIDATION_ERROR',
         400
       );
@@ -113,12 +115,30 @@ export async function POST(
     // comment". Both decisions, not only rejection — the audit trail is the
     // point of the rule, and an approval with no reason is exactly the gap
     // FR-05 exists to close.
-    if (trimmedComment.length < MIN_DECISION_COMMENT_LENGTH) {
-      return jsonError(DECISION_COMMENT_REQUIRED_MESSAGE, 'VALIDATION_ERROR', 400);
+    //
+    // BR-07 raises the bar for RETURN alone. A returned claim sends work back to
+    // its requester, so the reason has to name what needs changing. Approve and
+    // reject keep the five character rule FR-05 fixes, and TEST-35 still proves
+    // it. The two thresholds are deliberately not merged into one.
+    const isReturn = action === 'RETURN';
+    const minCommentLength = isReturn
+      ? MIN_RETURN_COMMENT_LENGTH
+      : MIN_DECISION_COMMENT_LENGTH;
+
+    if (trimmedComment.length < minCommentLength) {
+      return jsonError(
+        isReturn ? RETURN_COMMENT_REQUIRED_MESSAGE : DECISION_COMMENT_REQUIRED_MESSAGE,
+        'VALIDATION_ERROR',
+        400
+      );
     }
 
     const nextStatus =
-      action === 'APPROVE' ? RequestStatus.APPROVED : RequestStatus.REJECTED;
+      action === 'APPROVE'
+        ? RequestStatus.APPROVED
+        : action === 'REJECT'
+          ? RequestStatus.REJECTED
+          : RequestStatus.RETURNED;
 
     // Step 7 — the status change and the audit row are one transaction, so a
     // decided request can never exist without the row that explains it.
@@ -189,7 +209,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof AlreadyDecidedError) {
       return jsonError(
-        'Only a submitted request can be approved or rejected',
+        'Only a submitted request can be approved, rejected or returned',
         'INVALID_TRANSITION',
         400
       );

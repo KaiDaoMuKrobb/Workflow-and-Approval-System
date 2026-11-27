@@ -12,7 +12,7 @@
  */
 
 export interface QueueCandidate {
-  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RETURNED';
   assignedReviewer?: { id: string } | null;
   requester?: { id: string } | null;
 }
