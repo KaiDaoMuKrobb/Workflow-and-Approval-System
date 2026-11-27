@@ -300,7 +300,15 @@ describe('Feature F-04: Decision guards (AC-31..AC-35, AC-37, AC-38)', () => {
     await expectNoSideEffect(id, RequestStatus.SUBMITTED, 1);
   });
 
-  it('TEST-35b: an action that is neither APPROVE nor REJECT is refused', async () => {
+  // Revised by F-05. This case used `RETURN` as its example of an action the
+  // endpoint does not recognise, which stopped being true the moment F-05 made
+  // RETURN a real decision. The rule under test has not changed and neither has
+  // a single assertion: an unrecognised action is still refused with 400
+  // VALIDATION_ERROR and still writes nothing. Only the example moved, to
+  // `ESCALATE`, which is not a decision this system has. The alternative, an
+  // action name that is valid, would have made the case pass for the wrong
+  // reason and quietly stop guarding anything.
+  it('TEST-35b: an action that is none of APPROVE, REJECT or RETURN is refused', async () => {
     const id = await makeRequest({
       requesterId: aliceId,
       assignedReviewerId: carolId,
@@ -308,7 +316,7 @@ describe('Feature F-04: Decision guards (AC-31..AC-35, AC-37, AC-38)', () => {
       suffix: 'BAD-ACTION',
     });
 
-    const res = await decide(id, { action: 'RETURN', comment: 'Please revise this' }, carolCookie);
+    const res = await decide(id, { action: 'ESCALATE', comment: 'Please revise this' }, carolCookie);
     const body = await res.json();
 
     expect(res.status).toBe(400);
