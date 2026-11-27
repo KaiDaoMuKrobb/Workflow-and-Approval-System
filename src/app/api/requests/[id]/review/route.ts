@@ -8,7 +8,9 @@ import {
   DECISION_COMMENT_REQUIRED_MESSAGE,
   MIN_RETURN_COMMENT_LENGTH,
   RETURN_COMMENT_REQUIRED_MESSAGE,
+  HIGH_VALUE_THRESHOLD,
 } from '@/lib/review-rules';
+import { Role } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,10 +70,28 @@ export async function POST(
       );
     }
 
+    // Which stage is this, and therefore who is entitled to act. A claim that
+    // F-06 escalated belongs to its second reviewer; everything else belongs to
+    // the assigned reviewer, exactly as it did in Sprint 1.
+    const isSecondStage =
+      target.status === RequestStatus.PENDING_SECOND_APPROVAL;
+    const entitledReviewerId = isSecondStage
+      ? target.secondReviewerId
+      : target.assignedReviewerId;
+
     // Step 4 — BR-05, decide half.
-    if (target.assignedReviewerId !== sessionUser.id) {
+    //
+    // This is also where dual control is enforced. The reviewer who granted the
+    // first approval is the assigned reviewer, not the second one, so at the
+    // second stage they fail here and are told 403 like any other reviewer who
+    // is not entitled to act. That is deliberate: DEC-06 fixes 403 ahead of 400,
+    // and a DUPLICATE_APPROVER code answered later would be unreachable without
+    // reordering the guards for one feature. AC-63 is written against this.
+    if (entitledReviewerId !== sessionUser.id) {
       return jsonError(
-        'Only the assigned reviewer can decide this request',
+        isSecondStage
+          ? 'Only the second reviewer can decide this request'
+          : 'Only the assigned reviewer can decide this request',
         'FORBIDDEN',
         403
       );
@@ -79,9 +99,12 @@ export async function POST(
 
     // Step 5 — BR-02. After the permission guards, so a caller without
     // permission never learns whether the request has already been decided.
-    if (target.status !== RequestStatus.SUBMITTED) {
+    if (
+      target.status !== RequestStatus.SUBMITTED &&
+      target.status !== RequestStatus.PENDING_SECOND_APPROVAL
+    ) {
       return jsonError(
-        'Only a submitted request can be approved, rejected or returned',
+        'Only a submitted request, or one awaiting a second approval, can be decided',
         'INVALID_TRANSITION',
         400
       );
@@ -133,17 +156,105 @@ export async function POST(
       );
     }
 
+    // Step 5b — RETURN belongs to the first stage only. F-05 defines it as a way
+    // out of SUBMITTED, and a claim that has already collected one approval
+    // cannot be sent back for revision without invalidating that approval.
+    if (isSecondStage && action === 'RETURN') {
+      return jsonError(
+        'A request awaiting a second approval cannot be returned for revision',
+        'INVALID_TRANSITION',
+        400
+      );
+    }
+
+    // Step 6b — BR-09. A first approval of a claim above the threshold does not
+    // finish the claim, it escalates it, and an escalation has to name the
+    // person it escalates to. The comparison is on the Decimal: SR-04 and DEC-04
+    // keep money out of floating point, and this boundary is fixed to the
+    // satang, so 50,000.00 takes the single stage path and 50,000.01 does not.
+    const needsSecondApproval =
+      !isSecondStage &&
+      action === 'APPROVE' &&
+      target.totalAmount.gt(HIGH_VALUE_THRESHOLD);
+
+    let secondReviewerId: string | null = null;
+
+    if (needsSecondApproval) {
+      const { secondReviewerId: named } = (body ?? {}) as {
+        secondReviewerId?: unknown;
+      };
+      const candidateId = typeof named === 'string' ? named.trim() : '';
+
+      if (!candidateId) {
+        return jsonError(
+          'A claim above the dual control threshold needs a second reviewer named with the first approval',
+          'VALIDATION_ERROR',
+          400
+        );
+      }
+
+      // Dual control: the two approvals must come from two people, and neither
+      // may be the requester. BR-01 already refused the requester as a caller at
+      // step 3; this refuses them as the named second reviewer.
+      if (candidateId === sessionUser.id) {
+        return jsonError(
+          'You cannot name yourself as the second reviewer',
+          'VALIDATION_ERROR',
+          400
+        );
+      }
+
+      if (candidateId === target.requesterId) {
+        return jsonError(
+          'The requester cannot be named as the second reviewer',
+          'VALIDATION_ERROR',
+          400
+        );
+      }
+
+      const candidate = await prisma.user.findUnique({
+        where: { id: candidateId },
+      });
+
+      if (!candidate || candidate.role !== Role.REVIEWER) {
+        return jsonError(
+          'The second reviewer must hold the REVIEWER role',
+          'VALIDATION_ERROR',
+          400
+        );
+      }
+
+      secondReviewerId = candidate.id;
+    }
+
     const nextStatus =
-      action === 'APPROVE'
-        ? RequestStatus.APPROVED
-        : action === 'REJECT'
-          ? RequestStatus.REJECTED
-          : RequestStatus.RETURNED;
+      action === 'REJECT'
+        ? RequestStatus.REJECTED
+        : action === 'RETURN'
+          ? RequestStatus.RETURNED
+          : needsSecondApproval
+            ? RequestStatus.PENDING_SECOND_APPROVAL
+            : RequestStatus.APPROVED;
+
+    // BR-09 asks the trail to say which stage each approval was, so the two are
+    // named apart. A single stage approval keeps the plain APPROVE it has always
+    // had, which is what TEST-30 and TEST-36 assert.
+    const historyAction =
+      action !== 'APPROVE'
+        ? action
+        : needsSecondApproval
+          ? 'APPROVE_STAGE_1'
+          : isSecondStage
+            ? 'APPROVE_STAGE_2'
+            : 'APPROVE';
 
     // Step 7 — the status change and the audit row are one transaction, so a
     // decided request can never exist without the row that explains it.
     //
-    // The update repeats the SUBMITTED condition that step 5 already checked.
+    // The update repeats the status the caller was authorised against, which
+    // steps 4 and 5 already checked. It is read from the record rather than
+    // hard coded, because F-06 authorises two of them: SUBMITTED at the first
+    // stage and PENDING_SECOND_APPROVAL at the second.
     // Between that read and this write another request could have decided the
     // same claim: two tabs, a double submit, a retry. Without the condition both
     // would succeed and BR-02 would be broken by a second ApprovalHistory row on
@@ -151,8 +262,11 @@ export async function POST(
     // and `count === 0` is the signal to answer exactly as step 5 would have.
     const decided = await prisma.$transaction(async (tx) => {
       const { count } = await tx.expenseRequest.updateMany({
-        where: { id, status: RequestStatus.SUBMITTED },
-        data: { status: nextStatus },
+        where: { id, status: target.status },
+        data: {
+          status: nextStatus,
+          ...(needsSecondApproval ? { secondReviewerId } : {}),
+        },
       });
 
       if (count === 0) {
@@ -176,9 +290,9 @@ export async function POST(
         data: {
           requestId: id,
           actorId: sessionUser.id,
-          fromStatus: RequestStatus.SUBMITTED,
+          fromStatus: target.status,
           toStatus: nextStatus,
-          action,
+          action: historyAction,
           comment: trimmedComment,
         },
       });
@@ -209,7 +323,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof AlreadyDecidedError) {
       return jsonError(
-        'Only a submitted request can be approved, rejected or returned',
+        'Only a submitted request, or one awaiting a second approval, can be decided',
         'INVALID_TRANSITION',
         400
       );
