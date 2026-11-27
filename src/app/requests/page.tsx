@@ -551,6 +551,28 @@ export default function RequestsPage() {
                       <div className="text-lg font-bold text-slate-900">฿{r.totalAmount}</div>
                     </div>
 
+                    {/*
+                      Every row gets a way into the claim, whatever its status.
+                      Until F-05 there was no link to `/requests/[id]` anywhere
+                      outside the reviewer's queue, so a requester could never
+                      read a reviewer's reason: the list shows a status badge
+                      and the edit screen shows no history at all. That was
+                      survivable while the only reasons were for approvals and
+                      rejections, which are terminal and informational. It is
+                      not survivable for a return, where the reason is the
+                      instruction the requester has to act on. `BR-07` makes a
+                      reviewer write at least ten characters explaining the
+                      return, and this link is what carries them to the person
+                      who needs them.
+                    */}
+                    <Link
+                      href={`/requests/${r.id}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+                    >
+                      View
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+
                     {r.status === 'DRAFT' || r.status === 'RETURNED' ? (
                       <Link
                         href={`/requests/new?id=${r.id}`}
