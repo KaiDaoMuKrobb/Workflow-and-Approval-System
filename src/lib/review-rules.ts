@@ -40,6 +40,22 @@ export const SINGLE_ITEM_CAP_MESSAGE =
   'Single item amount cannot exceed 100,000 THB.';
 
 /**
+ * The dual control boundary `BR-09` states, in one place.
+ *
+ * A claim whose `totalAmount` is **strictly above** this figure needs a second,
+ * distinct approval before it reaches `APPROVED`. A claim of exactly this
+ * amount takes the single stage path. `DEC-08` fixed both the number and the
+ * strictness on 27 November 2026, replacing the 10,000.00 placeholder Sprint 1
+ * had used as an example.
+ *
+ * Compared against the `Decimal`, never against a number converted from it:
+ * `totalAmount.gt(HIGH_VALUE_THRESHOLD)`. `SR-04` and `DEC-04` keep money as
+ * `Decimal` end to end, and a boundary fixed to the satang is exactly where a
+ * float conversion would be wrong in a way nobody notices.
+ */
+export const HIGH_VALUE_THRESHOLD = 50000;
+
+/**
  * Supported expense categories across line items and filtering (F-07 / FR-08).
  */
 export const VALID_EXPENSE_CATEGORIES = [

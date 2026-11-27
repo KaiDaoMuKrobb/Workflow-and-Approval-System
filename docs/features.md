@@ -43,7 +43,7 @@ A **system responsibility** is behavior that applies universally across screens 
 | ID | Title | What it delivers | Requirements | Depends on | Owner | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | `F-05` | Return and resubmission workflow | Reviewer returns claim with reason; requester updates line items and resubmits | `FR-06`, `BR-07`, `BR-08` | `F-04` | siripitch-c | `verified` (11 tests pass, Issue #45, PR #54) |
-| `F-06` | Second stage approval for high amounts | Claims > 50,000 THB require two distinct approvals; dual control segregation | `FR-07`, `BR-09` | `F-04` | siripitch-c | `specified` (Threshold 50,000 THB, Contract committed) |
+| `F-06` | Second stage approval for high amounts | Claims > 50,000 THB require two distinct approvals; dual control segregation | `FR-07`, `BR-09` | `F-04` | siripitch-c | `verified` (14 tests pass, Issue #47) |
 | `F-07` | Multi-criteria search, filter, and pagination | Status, category, date, department filtering, text search, pagination | `FR-08` | `F-03` | KaiDaoMuKrobb | `verified` (PR #41, 10 tests passing, released) |
 
 ### Sprint 3: Advanced Analytics & Hardening
@@ -80,7 +80,7 @@ Every requirement in `docs/srs.md` maps to exactly one feature. Nothing is unall
 | `FR-04` | `F-03` | 1 | yes (`verified`) |
 | `FR-05` | `F-04` | 1 | yes (`verified`) |
 | `FR-06` | `F-05` | 2 | yes (`verified`) |
-| `FR-07` | `F-06` | 2 | yes (`specified`) |
+| `FR-07` | `F-06` | 2 | yes (`verified`) |
 | `FR-08` | `F-07` | 2 | yes (`verified`) |
 | `FR-09` | `F-08` | 3 | yes (`verified`) |
 | `FR-10` | `F-09` | 3 | yes (`specified`) |
@@ -92,7 +92,7 @@ Every requirement in `docs/srs.md` maps to exactly one feature. Nothing is unall
 | `BR-06` | `F-02` | 1 | yes (`verified`) |
 | `BR-07` | `F-05` | 2 | yes (`verified`) |
 | `BR-08` | `F-05` | 2 | yes (`verified`) |
-| `BR-09` | `F-06` | 2 | yes (`specified`) |
+| `BR-09` | `F-06` | 2 | yes (`verified`) |
 | `BR-10` | `F-09` | 3 | yes (`specified`) |
 | `NFR-01` | `F-01` | 1 | yes (`verified`) |
 | `NFR-02` | `F-01`, `SR-01` | 1 | yes (`verified`) |
