@@ -201,12 +201,14 @@ export async function GET(req: NextRequest) {
       submitted: 0,
       approved: 0,
       rejected: 0,
+      returned: 0,
     };
     for (const row of statusCountsRaw) {
       if (row.status === RequestStatus.DRAFT) stats.drafts = row._count._all;
       if (row.status === RequestStatus.SUBMITTED) stats.submitted = row._count._all;
       if (row.status === RequestStatus.APPROVED) stats.approved = row._count._all;
       if (row.status === RequestStatus.REJECTED) stats.rejected = row._count._all;
+      if (row.status === RequestStatus.RETURNED) stats.returned = row._count._all;
     }
 
     const serializedRequests = requests.map((r) => ({
