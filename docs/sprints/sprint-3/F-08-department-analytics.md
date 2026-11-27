@@ -158,5 +158,13 @@
 1. Contract reviewed and approved by peer engineer.
 2. TDD Red phase: automated tests fail against baseline.
 3. TDD Green phase: implementation passes all `TEST-80` to `TEST-86`.
+
+---
+
+## 7. Revision History
+| Version | Date | Author | Summary of Changes |
+| :--- | :--- | :--- | :--- |
+| 1.0 | 25 Nov 2026 | KaiDaoMuKrobb | Initial contract specification for `F-08` Department Spending Summary & Analytics before implementation. |
+| 1.1 | 26 Nov 2026 | KaiDaoMuKrobb | Clarified role guards (`AC-80` to `AC-82`), Decimal precision rules under `SR-04`, and empty state handling (`AC-86`). Verified in PR #46. |
 4. Zero regression across existing 81 automated tests.
 5. Code formatted, linted, and typed with zero errors.

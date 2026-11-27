@@ -104,3 +104,11 @@
 1. Contract reviewed and approved by peer engineer.
 2. Verified against non-functional requirements (`NFR-01` to `NFR-05`).
 3. Automated regression suite green before final release.
+
+---
+
+## 7. Revision History
+| Version | Date | Author | Summary of Changes |
+| :--- | :--- | :--- | :--- |
+| 1.0 | 25 Nov 2026 | siripitch-c | Initial contract specification for `F-10` Responsive Hardening & Regression before implementation. |
+| 1.1 | 26 Nov 2026 | siripitch-c | Detailed multi-viewport breakpoint specifications (375px, 768px, 1280px) and debounce invariants under `NFR-01` to `NFR-04`. |
