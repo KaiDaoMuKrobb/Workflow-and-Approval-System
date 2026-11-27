@@ -131,6 +131,17 @@ export async function POST(
       );
     }
 
+    // Step 5b. RETURN belongs to the first stage only. F-05 defines it as a way
+    // out of SUBMITTED, and a claim that has already collected one approval
+    // cannot be sent back for revision without invalidating that approval.
+    if (isSecondStage && action === 'RETURN') {
+      return jsonError(
+        'A request awaiting a second approval cannot be returned for revision',
+        'INVALID_TRANSITION',
+        400
+      );
+    }
+
     const trimmedComment =
       typeof comment === 'string' ? comment.trim() : '';
 
@@ -156,18 +167,7 @@ export async function POST(
       );
     }
 
-    // Step 5b — RETURN belongs to the first stage only. F-05 defines it as a way
-    // out of SUBMITTED, and a claim that has already collected one approval
-    // cannot be sent back for revision without invalidating that approval.
-    if (isSecondStage && action === 'RETURN') {
-      return jsonError(
-        'A request awaiting a second approval cannot be returned for revision',
-        'INVALID_TRANSITION',
-        400
-      );
-    }
-
-    // Step 6b — BR-09. A first approval of a claim above the threshold does not
+    // Step 6b. BR-09. A first approval of a claim above the threshold does not
     // finish the claim, it escalates it, and an escalation has to name the
     // person it escalates to. The comparison is on the Decimal: SR-04 and DEC-04
     // keep money out of floating point, and this boundary is fixed to the
