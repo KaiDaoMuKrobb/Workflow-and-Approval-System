@@ -18,24 +18,24 @@ import {
 
 interface SummaryData {
   summary: {
-    totalApprovedAmount: number;
+    totalApprovedAmount: string;
     totalApprovedClaims: number;
     activeDepartmentCount: number;
   };
   byDepartment: Array<{
     department: string;
-    totalAmount: number;
+    totalAmount: string;
     claimCount: number;
   }>;
   byCategory: Array<{
     category: string;
-    totalAmount: number;
+    totalAmount: string;
     percentage: number;
   }>;
   monthlyTotals: Array<{
     year: number;
     month: number;
-    totalAmount: number;
+    totalAmount: string;
     claimCount: number;
   }>;
 }
@@ -122,12 +122,13 @@ export default function ReportsPage() {
     }
   };
 
-  const formatCurrency = (val: number) => {
+  const formatCurrency = (val: number | string) => {
+    const num = typeof val === 'string' ? parseFloat(val) : val;
     return new Intl.NumberFormat('th-TH', {
       style: 'currency',
       currency: 'THB',
       minimumFractionDigits: 2,
-    }).format(val);
+    }).format(num);
   };
 
   if (forbidden) {
@@ -275,8 +276,8 @@ export default function ReportsPage() {
               ) : (
                 <div className="space-y-4">
                   {data.byDepartment.map((dept) => {
-                    const maxAmount = data.summary.totalApprovedAmount || 1;
-                    const pct = Math.round((dept.totalAmount / maxAmount) * 100);
+                    const maxAmount = parseFloat(data.summary.totalApprovedAmount) || 1;
+                    const pct = Math.round((parseFloat(dept.totalAmount) / maxAmount) * 100);
                     return (
                       <div key={dept.department} className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
@@ -369,7 +370,8 @@ export default function ReportsPage() {
                   </tr>
                 ) : (
                   data.monthlyTotals.map((m) => {
-                    const avg = m.claimCount > 0 ? m.totalAmount / m.claimCount : 0;
+                    const totalVal = parseFloat(m.totalAmount);
+                    const avg = m.claimCount > 0 ? totalVal / m.claimCount : 0;
                     return (
                       <tr key={`${m.year}-${m.month}`} className="hover:bg-slate-50 transition">
                         <td className="py-3.5 px-6 font-semibold text-slate-800 flex items-center gap-2">

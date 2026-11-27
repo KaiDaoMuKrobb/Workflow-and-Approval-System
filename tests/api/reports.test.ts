@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { GET as getSummaryHandler } from '../../src/app/api/reports/summary/route';
 import { prisma } from '../../src/lib/prisma';
 import { signToken } from '../../src/lib/auth';
-import { RequestStatus } from '@prisma/client';
+import { RequestStatus, Prisma } from '@prisma/client';
 
 describe('Feature F-08: Department Expense Summaries & Analytics (FR-09)', () => {
   let aliceId: string; // REQUESTER (Engineering)
@@ -14,6 +14,14 @@ describe('Feature F-08: Department Expense Summaries & Analytics (FR-09)', () =>
   let carolCookie: string;
 
   const testRequestIds: string[] = [];
+
+  // Baselines for delta assertions (satisfies review to prove non-approved exclusions)
+  let baselineTotal = new Prisma.Decimal(0);
+  let baselineClaimsCount = 0;
+  let baselineEngTotal = new Prisma.Decimal(0);
+  let baselineEngCount = 0;
+  let baselineDesignTotal = new Prisma.Decimal(0);
+  let baselineDesignCount = 0;
 
   beforeAll(async () => {
     // 1. Resolve or seed test users
@@ -80,6 +88,26 @@ describe('Feature F-08: Department Expense Summaries & Analytics (FR-09)', () =>
     await prisma.expenseRequest.deleteMany({
       where: { title: { startsWith: '[TEST-F08]' } },
     });
+
+    // 1.5 Measure pre-fixture baseline for exact delta assertions
+    const baseReq = new NextRequest('http://localhost:3000/api/reports/summary');
+    baseReq.headers.set('cookie', `expense_session=${carolCookie}`);
+    const baseRes = await getSummaryHandler(baseReq);
+    const baseJson = await baseRes.json();
+    if (baseJson.success) {
+      baselineTotal = new Prisma.Decimal(baseJson.data.summary.totalApprovedAmount);
+      baselineClaimsCount = baseJson.data.summary.totalApprovedClaims;
+      const eng = baseJson.data.byDepartment.find((d: any) => d.department === 'Engineering');
+      if (eng) {
+        baselineEngTotal = new Prisma.Decimal(eng.totalAmount);
+        baselineEngCount = eng.claimCount;
+      }
+      const des = baseJson.data.byDepartment.find((d: any) => d.department === 'Design');
+      if (des) {
+        baselineDesignTotal = new Prisma.Decimal(des.totalAmount);
+        baselineDesignCount = des.claimCount;
+      }
+    }
 
     // 2. Create seed claims with different statuses
     // Claim 1: Alice (Engineering) - APPROVED - 30,000 THB (Travel 20k, Meals 10k)
@@ -239,10 +267,17 @@ describe('Feature F-08: Department Expense Summaries & Analytics (FR-09)', () =>
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    // Total approved in test is 30,000 + 15,000 + 25,000 = 70,000 (plus any existing approved in seed)
-    // Non-approved 50,000 (SUBMITTED) and 10,000 (REJECTED) must NOT be included
-    expect(body.data.summary.totalApprovedAmount).toBeGreaterThanOrEqual(70000.0);
-    expect(body.data.summary.totalApprovedClaims).toBeGreaterThanOrEqual(3);
+    expect(body.success).toBe(true);
+
+    // Exact delta assertion (cannot pass if SUBMITTED or REJECTED leak into aggregate)
+    // Fixtures added 3 APPROVED claims: 30,000 + 15,000 + 25,000 = exactly 70,000.00 THB
+    const currentTotal = new Prisma.Decimal(body.data.summary.totalApprovedAmount);
+    const deltaTotal = currentTotal.minus(baselineTotal);
+    const deltaCount = body.data.summary.totalApprovedClaims - baselineClaimsCount;
+
+    expect(deltaTotal.toFixed(2)).toBe('70000.00');
+    expect(deltaCount).toBe(3);
+    expect(typeof body.data.summary.totalApprovedAmount).toBe('string');
   });
 
   it('TEST-84 / AC-84: calculates accurate departmental aggregation (byDepartment)', async () => {
@@ -256,17 +291,21 @@ describe('Feature F-08: Department Expense Summaries & Analytics (FR-09)', () =>
     const depts = body.data.byDepartment;
     expect(Array.isArray(depts)).toBe(true);
 
+    // Check Engineering delta (Alice had 30k + 15k = 45,000.00 THB across 2 claims)
     const engDept = depts.find((d: any) => d.department === 'Engineering');
     expect(engDept).toBeDefined();
-    // Alice had 30k + 15k = 45,000 THB approved across 2 claims
-    expect(engDept.totalAmount).toBeGreaterThanOrEqual(45000.0);
-    expect(engDept.claimCount).toBeGreaterThanOrEqual(2);
+    expect(typeof engDept.totalAmount).toBe('string');
+    const engDelta = new Prisma.Decimal(engDept.totalAmount).minus(baselineEngTotal);
+    expect(engDelta.toFixed(2)).toBe('45000.00');
+    expect(engDept.claimCount - baselineEngCount).toBe(2);
 
+    // Check Design delta (Bob had 25,000.00 THB across 1 claim)
     const designDept = depts.find((d: any) => d.department === 'Design');
     expect(designDept).toBeDefined();
-    // Bob had 25,000 THB approved in 1 claim
-    expect(designDept.totalAmount).toBeGreaterThanOrEqual(25000.0);
-    expect(designDept.claimCount).toBeGreaterThanOrEqual(1);
+    expect(typeof designDept.totalAmount).toBe('string');
+    const designDelta = new Prisma.Decimal(designDept.totalAmount).minus(baselineDesignTotal);
+    expect(designDelta.toFixed(2)).toBe('25000.00');
+    expect(designDept.claimCount - baselineDesignCount).toBe(1);
   });
 
   it('TEST-85 / AC-85: calculates category distribution and percentage breakdown (byCategory)', async () => {
@@ -280,14 +319,24 @@ describe('Feature F-08: Department Expense Summaries & Analytics (FR-09)', () =>
     const categories = body.data.byCategory;
     expect(Array.isArray(categories)).toBe(true);
 
-    // Verify category items have required fields
+    // Verify category items have required fields and adhere to SR-04 / DEC-04 string serialization
     categories.forEach((cat: any) => {
       expect(cat).toHaveProperty('category');
       expect(cat).toHaveProperty('totalAmount');
       expect(cat).toHaveProperty('percentage');
-      expect(typeof cat.totalAmount).toBe('number');
+      expect(typeof cat.totalAmount).toBe('string');
       expect(typeof cat.percentage).toBe('number');
     });
+
+    // Substantive checks on monthly totals
+    expect(Array.isArray(body.data.monthlyTotals)).toBe(true);
+    expect(body.data.monthlyTotals.length).toBeGreaterThan(0);
+    const latestMonth = body.data.monthlyTotals[0];
+    expect(latestMonth).toHaveProperty('year');
+    expect(latestMonth).toHaveProperty('month');
+    expect(typeof latestMonth.totalAmount).toBe('string');
+    expect(typeof latestMonth.claimCount).toBe('number');
+    expect(latestMonth.claimCount).toBeGreaterThan(0);
 
     // Sum of percentages should be approximately 100%
     const totalPercentage = categories.reduce((sum: number, c: any) => sum + c.percentage, 0);
