@@ -30,6 +30,12 @@ export async function GET(
         assignedReviewer: {
           select: { id: true, name: true, email: true },
         },
+        // F-06. The detail page names the reviewer a high value claim was
+        // escalated to, and canViewRequest already admits them, so the record
+        // has to carry them as well as the first reviewer.
+        secondReviewer: {
+          select: { id: true, name: true, email: true },
+        },
         history: {
           include: {
             actor: {
@@ -86,8 +92,16 @@ export async function PUT(
       return jsonError('Request not found', 'NOT_FOUND', 404);
     }
 
-    // Guard 4: Entity State Validation (BR-03: Immutable After Submit) -> 400
-    if (existingRequest.status !== RequestStatus.DRAFT) {
+    // Guard 4: Entity State Validation (BR-03, narrowed by BR-08) -> 400
+    //
+    // BR-03 is narrowed, not removed. A SUBMITTED claim is still immutable and
+    // TEST-15 proves it unchanged. A RETURNED claim is editable because BR-08
+    // asks its requester to correct it, and both write paths below, the items
+    // replacement and the header only update, are reached through this guard.
+    if (
+      existingRequest.status !== RequestStatus.DRAFT &&
+      existingRequest.status !== RequestStatus.RETURNED
+    ) {
       return jsonError(
         'Request cannot be edited after submission',
         'IMMUTABLE_AFTER_SUBMIT',

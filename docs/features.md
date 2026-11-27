@@ -1,131 +1,117 @@
 # Feature Inventory
 
-> **Deliverable 1 — Part B** · Owner: **siripitch-c**
-> Repository path: `docs/features.md`
-> Product: ExpenseFlow — Corporate Expense Reimbursement System (Theme 5, Workflow and Approval)
->
-> Companion document: `docs/traceability.md` maps every requirement to the feature that delivers it and the
-> tests that verify it. This file defines the features themselves.
+> **Deliverable 2: Sprint 2 Completion and Sprint 3 Progress**  
+> **Authors:** Pattarawadee Thanapoomthakul (67070503435), Siripitch Chaiyabutra (67070503440)  
+> **Repository path:** `docs/features.md`  
+> **Product:** ExpenseFlow: Corporate Expense Reimbursement System (Theme 5, Workflow and Approval)  
+> **Companion document:** `docs/traceability.md` maps every requirement to the feature that delivers it and the tests that verify it.
 
 ---
 
 ## 0. Team
 
-| GitHub | Name | Student ID |
-| :--- | :--- | :--- |
-| `KaiDaoMuKrobb` | Pattarawadee Thanapoomthakul | 67070503435 |
-| `siripitch-c` | Siripitch Chaiyabutra | 67070503440 |
+| GitHub | Name | Student ID | Core Role |
+| :--- | :--- | :--- | :--- |
+| `KaiDaoMuKrobb` | Pattarawadee Thanapoomthakul | 67070503435 | Reviewer / Integrator (Student A) |
+| `siripitch-c` | Siripitch Chaiyabutra | 67070503440 | Author / Implementer (Student B) |
 
-Ownership below is recorded by GitHub handle so it matches the author and reviewer names on every commit,
-Pull Request and Issue without needing a second document to decode it.
-
----
-
-## 1. How to read this file
-
-A **feature** is a bounded unit of work with one owner, one branch and one engineering contract. Features
-are numbered `F-01` upward and the number never changes once allocated.
-
-A **system responsibility** is behaviour that no single feature owns because it applies everywhere —
-authorization ordering, the error envelope, the audit trail. These are listed in §3 and each names the
-feature that establishes it and the sprint in which it is verified.
+Ownership is recorded by GitHub handle so it matches author and reviewer names on every commit, Pull Request, and Issue without ambiguity.
 
 ---
 
-## 2. Feature inventory
+## 1. How to Read This File
 
-### Sprint 1 — delivered for Deliverable 1
+A **feature** is a bounded unit of engineering work with one owner, one branch, and one engineering contract. Features are numbered `F-01` upward and identifiers never change once allocated.
 
-| ID | Title | What it delivers | Requirements | Depends on | Owner |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `F-01` | Authentication and session | Sign in, sign out, current user. Passwords hashed with bcrypt. Session carried in an `HttpOnly` cookie. Seed accounts and the first migration | `FR-01`, `NFR-01`, `NFR-02` | — | KaiDaoMuKrobb |
-| `F-02` | Expense request and line items | Create a request with its line items in `DRAFT`, edit it while it remains `DRAFT`, and submit it to a named reviewer. Server computes the total and allocates the request number | `FR-02`, `FR-03`, `BR-03`, `BR-04`, `BR-06` | `F-01` | KaiDaoMuKrobb |
-| `F-03` | Reviewer dashboard and assigned view | The request list scoped to the caller, the detail view with line items and history, and the reviewer dashboard. Owns the read half of access isolation | `FR-04`, `BR-05` (read), `NFR-03` | `F-01` | siripitch-c |
-| `F-04` | Approval workflow and business rule guards | The review endpoint accepting approve or reject with a reason, the three guards that enforce the rules, and the append-only history row written on every decision | `FR-05`, `BR-01`, `BR-02`, `BR-05` (decide) | `F-03` (API half) | siripitch-c |
-
-### Sprint 2 — planned
-
-| ID | Title | What it delivers | Requirements | Depends on |
-| :--- | :--- | :--- | :--- | :--- |
-| `F-05` | Return and resubmission | A reviewer returns a request with a reason, moving it to `RETURNED`. The requester corrects and resubmits. Both moves are recorded in the history | `FR-06`, `BR-07`, `BR-08` | `F-04` |
-| `F-06` | Second approval stage | A request at or above the threshold reaches `STAGE1_APPROVED` on the first approval and needs a second, different approver before `APPROVED`. `BR-09` introduces that status; the schema adds it in Sprint 2 | `FR-07`, `BR-09` | `F-04` |
-| `F-07` | Search, filter and paging | Both lists can be filtered by status, category, date range and department, searched by request number or title, and paged | `FR-08` | `F-03` |
-
-### Sprint 3 — planned
-
-| ID | Title | What it delivers | Requirements | Depends on |
-| :--- | :--- | :--- | :--- | :--- |
-| `F-08` | Department summaries and analytics | Aggregated expense metrics by department, monthly totals and category distribution, computed from the authoritative tables at request time | `FR-09` | `F-04`, `F-05` |
-| `F-09` | Financial report export | A reviewer exports a verified reimbursement report as CSV or JSON for accounting. A requester attempting a department-wide export is refused | `FR-10`, `BR-10` | `F-08` |
-| `F-10` | Hardening and regression | Consistent loading, empty, error and forbidden states on every screen; duplicate-submit protection; responsive and accessibility checks at three widths; the full regression suite green | No requirement of its own — it verifies `NFR-01` to `NFR-03` and the whole rule set under regression | all |
-
-> Every functional requirement in `docs/srs.md` is allocated to exactly one feature. `F-10` is the only
-> feature without a requirement of its own, because hardening is cross-cutting rather than a capability.
-> The acceptance criteria and executable tests for Sprint 2 and Sprint 3 features are elaborated when each
-> sprint begins; the allocation above is fixed now, as Part B requires.
+A **system responsibility** is behavior that applies universally across screens and endpoints: authorization ordering, error envelopes, audit history, and decimal precision. These are listed in §3.
 
 ---
 
-## 3. System responsibilities
+## 2. Feature Inventory
 
-These are not features. Each is behaviour that every endpoint or screen must honour, established by one
-feature and verified across several.
+### Sprint 1: Delivered & Accepted Baseline (v0.1.0, Commit 3cd8c45)
 
-| ID | Responsibility | Established by | Verified by | Sprint |
-| :--- | :--- | :--- | :--- | :--- |
-| `SR-01` | **Authorization check order.** Every endpoint evaluates `401 → 404 → 403 → 400` in that fixed order, so that two implementations of the same rule cannot disagree. Fixed by `DEC-06` | `F-04` | `AC-38` proves the order directly; `AC-23`, `AC-26`, `AC-31`, `AC-33`, `AC-37` each exercise one step | 1 |
-| `SR-02` | **Error envelope.** Every failure answers `{ success: false, error: { message, code } }` using the shared error code vocabulary in `docs/system-sds.md` §4.3. No stack trace, SQL or file path reaches a client | `F-01` | Every negative acceptance criterion asserts the `code`, not only the status | 1 |
-| `SR-03` | **Append-only audit history.** Every status change writes one `ApprovalHistory` row. No endpoint updates or deletes a row in that table | `F-02` (the `SUBMIT` row), `F-04` (decision rows) | `AC-30`, `AC-36` assert a row is added; `AC-31`, `AC-32`, `AC-33` assert none is added on refusal | 1 |
-| `SR-04` | **Monetary precision.** Amounts are `Decimal(12,2)` in the database and strings on the wire. They are never cast to a floating point number. Fixed by `DEC-04` | `F-01` (schema), `F-02` (totals) | `BR-04` tests in `F-02` | 1 |
-| `SR-05` | **Server-side enforcement.** A rule is enforced in the route handler. Hiding a control in the interface is never the enforcement | `F-04` | Each guard has an API-level test independent of any screen | 1 |
+| ID | Title | What it delivers | Requirements | Depends on | Owner | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `F-01` | Authentication and session | Sign in, sign out, session cookie, bcrypt password hashing, seed accounts | `FR-01`, `NFR-01`, `NFR-02` | None | KaiDaoMuKrobb | `verified` (PR #6) |
+| `F-02` | Expense request and line items | Draft creation, line items, request numbering, submission, immutability | `FR-02`, `FR-03`, `BR-03`, `BR-04`, `BR-06` | `F-01` | KaiDaoMuKrobb | `verified` (PR #8, #42, #44) |
+| `F-03` | Reviewer dashboard and assigned view | Scoped request lists, detail view, read isolation, queue empty states | `FR-04`, `BR-05` (read), `NFR-03` | `F-01` | siripitch-c | `verified` (PR #11) |
+| `F-04` | Approval workflow and business rule guards | Approve/reject endpoints, decision reasons, self-approval prevention | `FR-05`, `BR-01`, `BR-02`, `BR-05` (decide) | `F-03` | siripitch-c | `verified` (PR #14) |
+
+### Sprint 2: Core Expansion Increments (Target v0.3.0)
+
+| ID | Title | What it delivers | Requirements | Depends on | Owner | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `F-05` | Return and resubmission workflow | Reviewer returns claim with reason; requester updates line items and resubmits | `FR-06`, `BR-07`, `BR-08` | `F-04` | siripitch-c | `verified` (11 tests pass, Issue #45, PR #54) |
+| `F-06` | Second stage approval for high amounts | Claims > 50,000 THB require two distinct approvals; dual control segregation | `FR-07`, `BR-09` | `F-04` | siripitch-c | `verified` (14 tests pass, Issue #47) |
+| `F-07` | Multi-criteria search, filter, and pagination | Status, category, date, department filtering, text search, pagination | `FR-08` | `F-03` | KaiDaoMuKrobb | `verified` (PR #41, 10 tests passing, released) |
+
+### Sprint 3: Advanced Analytics & Hardening
+
+| ID | Title | What it delivers | Requirements | Depends on | Owner | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `F-08` | Department summaries and analytics | Aggregated spend by department, category percentage breakdown, monthly totals | `FR-09`, `NFR-05` | `F-04` | KaiDaoMuKrobb | `verified` (PR #46, 6/6 tests passing, UI dashboard ready) |
+| `F-09` | Financial report export | Reviewer exports reimbursement reports as CSV/JSON; requester access denied | `FR-10`, `BR-10` | `F-08` | KaiDaoMuKrobb | `specified` (Contract committed in sprint-3) |
+| `F-10` | Hardening and regression | Viewport responsiveness, duplicate-submit guards, complete regression suite | `NFR-01` .. `NFR-04` | all | siripitch-c | `specified` (Contract committed in sprint-3) |
 
 ---
 
-## 4. Coverage check
+## 3. System Responsibilities
 
-Every requirement in `docs/srs.md` maps to at least one feature. Nothing is unallocated.
+| ID | Responsibility | Established by | Verified by | Sprint | Status |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| `SR-01` | **Authorization check order:** `401 -> 404 -> 403 -> 400` fixed evaluation order | `F-04` | `TEST-38`, `TEST-33b`, `TEST-34b`, `TEST-80`, `TEST-81` | 1, 3 | `verified` |
+| `SR-02` | **Error envelope:** Shared `{ success: false, error: { message, code } }` schema | `F-01` | All negative criteria assert code and status | 1, 2, 3 | `verified` |
+| `SR-03` | **Append-only audit history:** Every state transition writes an `ApprovalHistory` row | `F-02`, `F-04`, `F-05` | `TEST-30b`, `TEST-50`, `TEST-55` | 1, 2 | `verified` |
+| `SR-04` | **Monetary precision:** Amounts stored as `Decimal(12,2)` and transferred as formatted strings | `F-01`, `F-02` | `TEST-12`, `TEST-20b`, `TEST-84`, `TEST-85` | 1, 2, 3 | `verified` |
+| `SR-05` | **Server-side enforcement:** All security guards enforced in route handlers | `F-04`, `F-07`, `F-08` | Isolated API-level test cases without browser dependency | 1, 2, 3 | `verified` |
+
+---
+
+## 4. Coverage Check
+
+Every requirement in `docs/srs.md` maps to exactly one feature. Nothing is unallocated.
 
 | Requirement | Feature | Sprint | Covered |
-| :--- | :--- | :--- | :--- |
-| `FR-01` | `F-01` | 1 | yes |
-| `FR-02` | `F-02` | 1 | yes |
-| `FR-03` | `F-02` | 1 | yes |
-| `FR-04` | `F-03` | 1 | yes |
-| `FR-05` | `F-04` | 1 | yes |
-| `FR-06` | `F-05` | 2 | yes |
-| `FR-07` | `F-06` | 2 | yes |
-| `FR-08` | `F-07` | 2 | yes |
-| `FR-09` | `F-08` | 3 | yes |
-| `FR-10` | `F-09` | 3 | yes |
-| `BR-01` | `F-04` | 1 | yes |
-| `BR-02` | `F-04` | 1 | yes |
-| `BR-03` | `F-02` | 1 | yes |
-| `BR-04` | `F-02` | 1 | yes |
-| `BR-05` | `F-03` (read) and `F-04` (decide) | 1 | yes, split across two features |
-| `BR-06` | `F-02` | 1 | yes |
-| `BR-07` | `F-05` | 2 | yes |
-| `BR-08` | `F-05` | 2 | yes |
-| `BR-09` | `F-06` | 2 | yes |
-| `BR-10` | `F-09` | 3 | yes |
-| `NFR-01` | `F-01` | 1 | yes |
-| `NFR-02` | `F-01`, enforced by `SR-01` everywhere | 1 | yes |
-| `NFR-03` | `F-03` | 1 | yes |
+| :--- | :--- | :---: | :--- |
+| `FR-01` | `F-01` | 1 | yes (`verified`) |
+| `FR-02` | `F-02` | 1 | yes (`verified`) |
+| `FR-03` | `F-02` | 1 | yes (`verified`) |
+| `FR-04` | `F-03` | 1 | yes (`verified`) |
+| `FR-05` | `F-04` | 1 | yes (`verified`) |
+| `FR-06` | `F-05` | 2 | yes (`verified`) |
+| `FR-07` | `F-06` | 2 | yes (`verified`) |
+| `FR-08` | `F-07` | 2 | yes (`verified`) |
+| `FR-09` | `F-08` | 3 | yes (`verified`) |
+| `FR-10` | `F-09` | 3 | yes (`specified`) |
+| `BR-01` | `F-04` | 1 | yes (`verified`) |
+| `BR-02` | `F-04` | 1 | yes (`verified`) |
+| `BR-03` | `F-02` | 1 | yes (`verified`) |
+| `BR-04` | `F-02` | 1 | yes (`verified`) |
+| `BR-05` | `F-03` (read), `F-04` (decide) | 1 | yes (`verified`) |
+| `BR-06` | `F-02` | 1 | yes (`verified`) |
+| `BR-07` | `F-05` | 2 | yes (`verified`) |
+| `BR-08` | `F-05` | 2 | yes (`verified`) |
+| `BR-09` | `F-06` | 2 | yes (`verified`) |
+| `BR-10` | `F-09` | 3 | yes (`specified`) |
+| `NFR-01` | `F-01` | 1 | yes (`verified`) |
+| `NFR-02` | `F-01`, `SR-01` | 1 | yes (`verified`) |
+| `NFR-03` | `F-03` | 1 | yes (`verified`) |
+| `NFR-04` | `F-10` | 3 | yes (`specified`) |
+| `NFR-05` | `F-08` | 3 | yes (`verified`) |
 
-**Uncovered requirements: none.**
-
-**Open item.** `FR-07` and `BR-09` describe the second approval stage as triggering at a threshold, and
-`docs/srs.md` gives 10,000.00 THB only as an example. The value is a stakeholder decision and must be
-recorded as a design decision before `F-06` can be specified.
+**Uncovered requirements:** None.  
+**Threshold decision:** Confirmed at **50,000.00 THB** for `F-06` dual approval workflow.
 
 ---
 
-## 5. Approved changes to scope
+## 5. Approved Scope & Architectural Changes
 
-Changes are recorded here as they are approved. None are silent.
-
-| Date | Change | Reason | Recorded in |
+| Date | Change ID | Summary & Rationale | Recorded in |
 | :--- | :--- | :--- | :--- |
-| 3 Nov 2026 | Deleting a request is out of scope for Sprint 1 | `BR-03` referred to deletion but no endpoint existed to test it. Removing the capability keeps the rule testable and the sprint achievable | Team agreement `DEC-07` |
-| 4 Nov 2026 | `F-09` is **Financial report export** (`FR-10`, `BR-10`) instead of department-scoped authorization | Department scoping is not a requirement in `docs/srs.md`, while `FR-10` and `BR-10` had no feature. The change gives every functional requirement exactly one feature and removes a feature the baseline never asked for | This table; `docs/sprints/plan.md` §4 |
-| 3 Nov 2026 | A request must carry at least one line item before it can be submitted | Without it a request with a zero total could be submitted, which `BR-04` did not previously prevent | Team agreement `BR-04` |
-| 24 Nov 2026 | `DEC-02` revised to v2.0: a requester who selects themselves as the assigned reviewer is refused at submission with `400 SELF_ASSIGNMENT`, instead of being allowed through and refused later at the decision boundary | The Lab 6 independent UAT recorded limitation `K-2`: such a claim can never be decided by anyone, because `BR-01` blocks the owner, `AC-33` blocks every other reviewer and `BR-03` makes the claim immutable, so it stays `SUBMITTED` permanently. The `BR-01` guard is retained as a second layer | Issue #39, approved by the course TA on 24 Nov 2026; `docs/srs.md` §8; `docs/sprints/sprint-1/F-02-request-crud.md` v2.0 |
+| 03 Nov 2026 | `DEC-07` | Deleting a request is excluded from scope; immutability preserved via terminal states. | Team agreement |
+| 04 Nov 2026 | Scope Realignment | `F-09` formalized as Financial Report Export (`FR-10`, `BR-10`) to match SRS baseline. | `docs/sprints/plan.md` |
+| 03 Nov 2026 | `BR-04` | A request must contain at least one line item prior to submission. | Team agreement |
+| 24 Nov 2026 | `DEC-02 v2.0` | Refuse self-assignment at submission with HTTP 400 `SELF_ASSIGNMENT`. Resolves UAT finding K-2. | Issue #39, PR #40, PR #42, PR #44 |
+| 26 Nov 2026 | Boundary Fix | Enforce 100,000.00 THB maximum boundary on individual line items (`DEF-CONTROLLED-BOUNDARY-01`). | PR #38 |
+| 27 Nov 2026 | `DEC-08` | Finalize two-stage approval threshold at 50,000.00 THB for high-value claims (`F-06`). | `docs/sprints/sprint-2/F-06-second-approval.md` |

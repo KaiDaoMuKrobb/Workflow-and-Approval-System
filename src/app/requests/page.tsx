@@ -35,7 +35,7 @@ interface ExpenseRequest {
   title: string;
   description: string;
   totalAmount: string;
-  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RETURNED';
   createdAt: string;
   items: ExpenseItem[];
 }
@@ -56,7 +56,7 @@ export default function RequestsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [pagination, setPagination] = useState({ page: 1, pageSize: 10, totalCount: 0, totalPages: 1 });
-  const [stats, setStats] = useState({ drafts: 0, submitted: 0, approved: 0 });
+  const [stats, setStats] = useState({ drafts: 0, submitted: 0, approved: 0, returned: 0 });
 
   const fetchRequests = useCallback(
     async (targetPage = page) => {
@@ -174,6 +174,12 @@ export default function RequestsPage() {
             <XCircle className="w-3.5 h-3.5" /> Rejected
           </span>
         );
+      case 'RETURNED':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200">
+            <RotateCcw className="w-3.5 h-3.5" /> Returned for Revision
+          </span>
+        );
       default:
         return <span className="px-2.5 py-1 text-xs font-semibold bg-slate-100 text-slate-700">{status}</span>;
     }
@@ -258,7 +264,7 @@ export default function RequestsPage() {
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Drafts</div>
             <div className="text-2xl font-bold text-amber-600">{stats.drafts}</div>
@@ -269,6 +275,12 @@ export default function RequestsPage() {
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pending Review</div>
             <div className="text-2xl font-bold text-blue-600">{stats.submitted}</div>
             <div className="text-xs text-slate-400 mt-1">Submitted for managerial decision</div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Returned</div>
+            <div className="text-2xl font-bold text-orange-600">{stats.returned || 0}</div>
+            <div className="text-xs text-slate-400 mt-1">Returned by reviewer for revision</div>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
@@ -327,6 +339,7 @@ export default function RequestsPage() {
                   <option value="">All Statuses</option>
                   <option value="DRAFT">Draft</option>
                   <option value="SUBMITTED">Submitted</option>
+                  <option value="RETURNED">Returned for Revision</option>
                   <option value="APPROVED">Approved</option>
                   <option value="REJECTED">Rejected</option>
                 </select>
@@ -538,12 +551,34 @@ export default function RequestsPage() {
                       <div className="text-lg font-bold text-slate-900">฿{r.totalAmount}</div>
                     </div>
 
-                    {r.status === 'DRAFT' ? (
+                    {/*
+                      Every row gets a way into the claim, whatever its status.
+                      Until F-05 there was no link to `/requests/[id]` anywhere
+                      outside the reviewer's queue, so a requester could never
+                      read a reviewer's reason: the list shows a status badge
+                      and the edit screen shows no history at all. That was
+                      survivable while the only reasons were for approvals and
+                      rejections, which are terminal and informational. It is
+                      not survivable for a return, where the reason is the
+                      instruction the requester has to act on. `BR-07` makes a
+                      reviewer write at least ten characters explaining the
+                      return, and this link is what carries them to the person
+                      who needs them.
+                    */}
+                    <Link
+                      href={`/requests/${r.id}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+                    >
+                      View
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+
+                    {r.status === 'DRAFT' || r.status === 'RETURNED' ? (
                       <Link
                         href={`/requests/new?id=${r.id}`}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
                       >
-                        Edit / Submit
+                        {r.status === 'RETURNED' ? 'Edit & Resubmit' : 'Edit / Submit'}
                         <ChevronRight className="w-3.5 h-3.5" />
                       </Link>
                     ) : (

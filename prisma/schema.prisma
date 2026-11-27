@@ -18,6 +18,7 @@ enum RequestStatus {
   APPROVED
   REJECTED
   RETURNED // Reserved for Sprint 2
+  PENDING_SECOND_APPROVAL // F-06: approved once, waiting on a distinct second reviewer
 }
 
 model User {
@@ -31,6 +32,7 @@ model User {
   updatedAt        DateTime          @updatedAt
   requests         ExpenseRequest[]  @relation("RequesterRequests")
   assignedRequests ExpenseRequest[]  @relation("AssignedReviewerRequests")
+  secondReviews    ExpenseRequest[]  @relation("SecondReviewerRequests")
   actions          ApprovalHistory[] @relation("ActorActions")
 }
 
@@ -45,6 +47,11 @@ model ExpenseRequest {
   requester          User              @relation("RequesterRequests", fields: [requesterId], references: [id])
   assignedReviewerId String?
   assignedReviewer   User?             @relation("AssignedReviewerRequests", fields: [assignedReviewerId], references: [id])
+  // F-06: set by the first reviewer when approving a claim above the BR-09 threshold.
+  // Null for every single stage claim, and never null while the status is
+  // PENDING_SECOND_APPROVAL.
+  secondReviewerId   String?
+  secondReviewer     User?             @relation("SecondReviewerRequests", fields: [secondReviewerId], references: [id])
   items              ExpenseItem[]
   history            ApprovalHistory[]
   createdAt          DateTime          @default(now())
@@ -52,6 +59,7 @@ model ExpenseRequest {
 
   @@index([requesterId])
   @@index([assignedReviewerId])
+  @@index([secondReviewerId])
   @@index([status])
 }
 
@@ -75,7 +83,7 @@ model ApprovalHistory {
   actor      User           @relation("ActorActions", fields: [actorId], references: [id])
   fromStatus RequestStatus
   toStatus   RequestStatus
-  action     String         // SUBMIT, APPROVE, REJECT
+  action     String         // SUBMIT, APPROVE, REJECT, RETURN, RESUBMIT, APPROVE_STAGE_1, APPROVE_STAGE_2
   comment    String?
   createdAt  DateTime       @default(now())
 

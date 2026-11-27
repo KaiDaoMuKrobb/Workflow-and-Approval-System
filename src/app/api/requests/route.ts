@@ -98,24 +98,49 @@ export async function GET(req: NextRequest) {
     // Base visibility logic (BR-05)
     let baseVisibility: Prisma.ExpenseRequestWhereInput;
     if (isQueueView) {
-      // Reviewer queue view: submitted claims assigned to this reviewer, not raised by them
+      // Reviewer queue view: the claims waiting on this reviewer, at either
+      // stage, and never one they raised themselves.
+      //
+      // F-06 gives a claim two moments when it waits on somebody. While it is
+      // SUBMITTED it waits on its assigned reviewer, and once a first approval
+      // escalates it past the BR-09 threshold it waits on the second reviewer
+      // instead. Both belong in the same queue, because the queue is what a
+      // reviewer opens to find the work that is theirs.
+      //
+      // `requesterId: { not: ... }` is repeated on both branches rather than
+      // lifted out. BR-01 refuses a self decision at the endpoint regardless,
+      // and this keeps a reviewer from meeting their own claim in a list of
+      // things to decide, which the TEST-28 family asserts.
       if (sessionUser.role === 'REVIEWER') {
         baseVisibility = {
-          assignedReviewerId: sessionUser.id,
-          requesterId: { not: sessionUser.id },
-          status: RequestStatus.SUBMITTED,
+          OR: [
+            {
+              assignedReviewerId: sessionUser.id,
+              requesterId: { not: sessionUser.id },
+              status: RequestStatus.SUBMITTED,
+            },
+            {
+              secondReviewerId: sessionUser.id,
+              requesterId: { not: sessionUser.id },
+              status: RequestStatus.PENDING_SECOND_APPROVAL,
+            },
+          ],
         };
       } else {
         baseVisibility = { requesterId: 'none' }; // Requesters have no review queue
       }
     } else {
-      // General list view
+      // General list view. No status condition here, by design: this is
+      // everything a reviewer is entitled to see rather than everything waiting
+      // on them, so a claim escalated to them under F-06 belongs in it at every
+      // stage of its life, not only while it is pending.
       baseVisibility =
         sessionUser.role === 'REVIEWER'
           ? {
               OR: [
                 { requesterId: sessionUser.id },
                 { assignedReviewerId: sessionUser.id },
+                { secondReviewerId: sessionUser.id },
               ],
             }
           : {
@@ -176,6 +201,12 @@ export async function GET(req: NextRequest) {
           assignedReviewer: {
             select: { id: true, name: true, email: true },
           },
+          // Without this a row says a claim is PENDING_SECOND_APPROVAL but not
+          // who it is pending on, so neither the screen nor selectReviewQueue
+          // can tell one reviewer's work from another's.
+          secondReviewer: {
+            select: { id: true, name: true, email: true },
+          },
           history: {
             orderBy: { createdAt: 'desc' },
           },
@@ -189,8 +220,24 @@ export async function GET(req: NextRequest) {
       }),
       prisma.expenseRequest.groupBy({
         by: ['status'],
+        // The same condition as the queue above. The two are written out
+        // separately, so a change to one that is not made to the other shows up
+        // as tiles that disagree with the rows underneath them.
         where: isQueueView && sessionUser.role === 'REVIEWER'
-          ? { assignedReviewerId: sessionUser.id, requesterId: { not: sessionUser.id }, status: RequestStatus.SUBMITTED }
+          ? {
+              OR: [
+                {
+                  assignedReviewerId: sessionUser.id,
+                  requesterId: { not: sessionUser.id },
+                  status: RequestStatus.SUBMITTED,
+                },
+                {
+                  secondReviewerId: sessionUser.id,
+                  requesterId: { not: sessionUser.id },
+                  status: RequestStatus.PENDING_SECOND_APPROVAL,
+                },
+              ],
+            }
           : { requesterId: sessionUser.id },
         _count: { _all: true },
       }),
@@ -201,12 +248,19 @@ export async function GET(req: NextRequest) {
       submitted: 0,
       approved: 0,
       rejected: 0,
+      returned: 0,
+      pendingSecondApproval: 0,
     };
     for (const row of statusCountsRaw) {
       if (row.status === RequestStatus.DRAFT) stats.drafts = row._count._all;
       if (row.status === RequestStatus.SUBMITTED) stats.submitted = row._count._all;
       if (row.status === RequestStatus.APPROVED) stats.approved = row._count._all;
       if (row.status === RequestStatus.REJECTED) stats.rejected = row._count._all;
+      if (row.status === RequestStatus.RETURNED) stats.returned = row._count._all;
+      // Counted by groupBy and then dropped by this loop until F-06 added it,
+      // which made a claim awaiting a second approval invisible in the tiles.
+      if (row.status === RequestStatus.PENDING_SECOND_APPROVAL)
+        stats.pendingSecondApproval = row._count._all;
     }
 
     const serializedRequests = requests.map((r) => ({

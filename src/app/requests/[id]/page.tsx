@@ -34,13 +34,21 @@ interface RequestDetail {
   title: string;
   description: string;
   totalAmount: string;
-  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+  status:
+    | 'DRAFT'
+    | 'SUBMITTED'
+    | 'APPROVED'
+    | 'REJECTED'
+    | 'RETURNED'
+    | 'PENDING_SECOND_APPROVAL';
   createdAt: string;
   updatedAt: string;
   requesterId: string;
   assignedReviewerId: string | null;
+  secondReviewerId: string | null;
   requester?: { id: string; name: string; department?: string } | null;
   assignedReviewer?: { id: string; name: string } | null;
+  secondReviewer?: { id: string; name: string } | null;
   items: ExpenseItem[];
   history: HistoryEntry[];
 }
@@ -50,6 +58,8 @@ const STATUS_STYLES: Record<RequestDetail['status'], string> = {
   SUBMITTED: 'bg-amber-100 text-amber-800',
   APPROVED: 'bg-emerald-100 text-emerald-800',
   REJECTED: 'bg-rose-100 text-rose-800',
+  RETURNED: 'bg-orange-100 text-orange-800',
+  PENDING_SECOND_APPROVAL: 'bg-violet-100 text-violet-800',
 };
 
 export default function RequestDetailPage({ params }: { params: { id: string } }) {
@@ -206,6 +216,19 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
                     {request.assignedReviewer?.name ?? 'Not yet assigned'}
                   </dd>
                 </div>
+                {/*
+                  F-06. Shown only once a claim has been escalated, because for
+                  every single stage claim there is no second reviewer and an
+                  empty row would suggest the field was forgotten.
+                */}
+                {request.secondReviewer && (
+                  <div>
+                    <dt className="text-slate-500">Second reviewer</dt>
+                    <dd className="mt-1 font-medium text-slate-900">
+                      {request.secondReviewer.name}
+                    </dd>
+                  </div>
+                )}
                 <div>
                   <dt className="text-slate-500">Submitted</dt>
                   <dd className="mt-1 font-medium text-slate-900">
@@ -254,6 +277,8 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
                 status: request.status,
                 requesterId: request.requesterId,
                 assignedReviewerId: request.assignedReviewerId,
+                secondReviewerId: request.secondReviewerId,
+                totalAmount: request.totalAmount,
               }}
               viewerId={viewerId}
               onDecided={load}

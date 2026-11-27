@@ -17,12 +17,20 @@
 export interface VisibilityFields {
   requesterId: string;
   assignedReviewerId: string | null;
+  // F-06. Optional so that callers selecting only the Sprint 1 fields still
+  // satisfy the type; absent is treated the same as null.
+  secondReviewerId?: string | null;
 }
 
 /**
- * `BR-05`, read half. A request is visible to the person who raised it and to
- * the reviewer it was assigned to. Nobody else, regardless of role: holding the
+ * `BR-05`, read half. A request is visible to the person who raised it, to the
+ * reviewer it was assigned to, and, once `F-06` escalates it, to the reviewer
+ * named for the second stage. Nobody else, regardless of role: holding the
  * `REVIEWER` role does not grant sight of every request.
+ *
+ * The second reviewer has to be here. Without it `DEC-03` answers 404 to the
+ * one person who is required to decide the claim, and the dual control journey
+ * cannot be completed from the interface at all.
  *
  * Callers answer `404` rather than `403` when this returns false, so the two are
  * indistinguishable from outside (`DEC-03`).
@@ -35,5 +43,9 @@ export function canViewRequest<T extends VisibilityFields>(
   userId: string
 ): request is T {
   if (!request) return false;
-  return request.requesterId === userId || request.assignedReviewerId === userId;
+  return (
+    request.requesterId === userId ||
+    request.assignedReviewerId === userId ||
+    request.secondReviewerId === userId
+  );
 }

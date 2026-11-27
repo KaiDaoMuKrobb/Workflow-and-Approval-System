@@ -18,9 +18,9 @@
    - The server generates an authoritative, sequential request number formatted as `EXP-{YYYY}-{NNNN}` (e.g. `EXP-2026-0001`) with collision prevention (`BR-06`).
    - The server computes the authoritative `totalAmount` by summing line items using PostgreSQL `Decimal(12, 2)`. Any client-provided `totalAmount` is discarded.
 
-2. **Draft Modification (`PUT /api/requests/:id`):**  
-   The request owner can update header fields and replace line items while the request remains in `DRAFT` status.
-   - Guard order: `401 UNAUTHENTICATED` $\rightarrow$ `404 NOT_FOUND` (if request does not exist or caller is not owner per `DEC-03` / `BR-05`) $\rightarrow$ `400 IMMUTABLE_AFTER_SUBMIT` (if `status !== DRAFT` per `BR-03`) $\rightarrow$ `400 VALIDATION_ERROR` (if items are invalid).
+2. **Draft & Revision Modification (`PUT /api/requests/:id`):**  
+   The request owner can update header fields and replace line items while the request remains in `DRAFT` or `RETURNED` status.
+   - Guard order: `401 UNAUTHENTICATED` $\rightarrow$ `404 NOT_FOUND` (if request does not exist or caller is not owner per `DEC-03` / `BR-05`) $\rightarrow$ `400 IMMUTABLE_AFTER_SUBMIT` (if `status !== DRAFT && status !== RETURNED` per `BR-03` narrowed by `BR-08`) $\rightarrow$ `400 VALIDATION_ERROR` (if items are invalid).
    - The server recalculates `totalAmount` from the updated items in a transaction.
 
 3. **Request Submission (`POST /api/requests/:id/submit`):**  
@@ -109,7 +109,7 @@
 - **Error Responses:**
   - `401 Unauthorized`: code `UNAUTHENTICATED`
   - `404 Not Found`: code `NOT_FOUND` (if request does not exist or caller is not owner per `DEC-03`)
-  - `400 Bad Request`: code `IMMUTABLE_AFTER_SUBMIT` (if `status !== 'DRAFT'`)
+  - `400 Bad Request`: code `IMMUTABLE_AFTER_SUBMIT` (if `status !== 'DRAFT' && status !== 'RETURNED'`)
   - `400 Bad Request`: code `VALIDATION_ERROR` (if items array empty or item amount $\le 0$)
 
 #### `POST /api/requests/:id/submit`

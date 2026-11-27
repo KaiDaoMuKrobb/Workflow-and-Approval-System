@@ -26,8 +26,15 @@ export async function POST(
       return jsonError('Request not found', 'NOT_FOUND', 404);
     }
 
-    // Guard 4: Entity State Validation (BR-03) -> 400
-    if (existingRequest.status !== RequestStatus.DRAFT) {
+    // Guard 4: Entity State Validation (BR-03, narrowed by BR-08) -> 400
+    //
+    // RETURNED joins DRAFT here because BR-08 gives a returned claim a way back
+    // into review. Everything else is still refused: SUBMITTED is immutable
+    // under BR-03, and APPROVED and REJECTED are terminal under BR-02.
+    if (
+      existingRequest.status !== RequestStatus.DRAFT &&
+      existingRequest.status !== RequestStatus.RETURNED
+    ) {
       return jsonError(
         'Request has already been submitted or finalized',
         'IMMUTABLE_AFTER_SUBMIT',
@@ -90,14 +97,22 @@ export async function POST(
         },
       });
 
+      // BR-08 requires the trail to show what actually happened. The status the
+      // claim came from is read from the record rather than assumed: hard coding
+      // DRAFT here would record every resubmission as DRAFT to SUBMITTED and
+      // quietly erase the return it followed. TEST-57 asserts both rows.
+      const resubmission = existingRequest.status === RequestStatus.RETURNED;
+
       await tx.approvalHistory.create({
         data: {
           requestId: id,
           actorId: sessionUser.id,
-          fromStatus: RequestStatus.DRAFT,
+          fromStatus: existingRequest.status,
           toStatus: RequestStatus.SUBMITTED,
-          action: 'SUBMIT',
-          comment: 'Request submitted for managerial review',
+          action: resubmission ? 'RESUBMIT' : 'SUBMIT',
+          comment: resubmission
+            ? 'Request revised and resubmitted for managerial review'
+            : 'Request submitted for managerial review',
         },
       });
 

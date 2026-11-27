@@ -6,7 +6,7 @@ export interface QueueRequest {
   requestNumber: string;
   title: string;
   totalAmount: string;
-  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RETURNED';
   createdAt: string;
   requester?: { id: string; name: string; department?: string } | null;
 }
@@ -16,6 +16,7 @@ const STATUS_STYLES: Record<QueueRequest['status'], string> = {
   SUBMITTED: 'bg-amber-100 text-amber-800',
   APPROVED: 'bg-emerald-100 text-emerald-800',
   REJECTED: 'bg-rose-100 text-rose-800',
+  RETURNED: 'bg-orange-100 text-orange-800',
 };
 
 /**
@@ -64,7 +65,7 @@ export default function ReviewerQueue({ requests }: { requests: QueueRequest[] }
               </td>
               <td className="px-4 py-3 font-medium text-slate-900">{request.title}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-600">
-                {request.requester?.name ?? '—'}
+                {request.requester?.name ?? '-'}
               </td>
               {/* Rendered straight from the string the API sends. Converting to a
                   number here would discard the precision DEC-04 exists to protect. */}

@@ -21,8 +21,39 @@ export const DECISION_COMMENT_REQUIRED_MESSAGE =
  */
 export const MAX_SINGLE_ITEM_AMOUNT = 100000;
 
+/**
+ * The return rule `BR-07`, stated in one place like the decision rule above.
+ *
+ * `BR-07` in `docs/srs.md`: returning a claim for revision requires a non-empty
+ * reason of at least 10 characters. This is a separate and higher threshold
+ * from `MIN_DECISION_COMMENT_LENGTH`, which governs approve and reject and does
+ * not change. A returned claim asks the requester to do work, so the reason has
+ * to say what needs changing, and five characters cannot. The number is fixed
+ * by the `F-05` contract, section 2.1.
+ */
+export const MIN_RETURN_COMMENT_LENGTH = 10;
+
+export const RETURN_COMMENT_REQUIRED_MESSAGE =
+  `A reason of at least ${MIN_RETURN_COMMENT_LENGTH} characters is required to return a request for revision`;
+
 export const SINGLE_ITEM_CAP_MESSAGE =
   'Single item amount cannot exceed 100,000 THB.';
+
+/**
+ * The dual control boundary `BR-09` states, in one place.
+ *
+ * A claim whose `totalAmount` is **strictly above** this figure needs a second,
+ * distinct approval before it reaches `APPROVED`. A claim of exactly this
+ * amount takes the single stage path. `DEC-08` fixed both the number and the
+ * strictness on 27 November 2026, replacing the 10,000.00 placeholder Sprint 1
+ * had used as an example.
+ *
+ * Compared against the `Decimal`, never against a number converted from it:
+ * `totalAmount.gt(HIGH_VALUE_THRESHOLD)`. `SR-04` and `DEC-04` keep money as
+ * `Decimal` end to end, and a boundary fixed to the satang is exactly where a
+ * float conversion would be wrong in a way nobody notices.
+ */
+export const HIGH_VALUE_THRESHOLD = 50000;
 
 /**
  * Supported expense categories across line items and filtering (F-07 / FR-08).

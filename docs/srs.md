@@ -1,7 +1,7 @@
 # Software Requirements Specification (SRS)
 **Project:** Corporate Expense Reimbursement System (ExpenseFlow)  
 **Deliverable:** CPE 334 Project Deliverable 1 (Part A: 10 Points)  
-**Theme:** Theme 5 — Workflow and Approval System  
+**Theme:** Theme 5: Workflow and Approval System  
 **Document Status:** Approved Baseline (Sprints 1–3)  
 **Author / Maintainer:** KaiDaoMuKrobb  
 **Reviewer:** siripitch-c  
@@ -97,9 +97,19 @@ All business rules are enforced exclusively at the **Application / Server Layer 
 - **`BR-02 (State Transition Validation)`**:  
   Status changes must strictly follow the defined state machine:
   $$\text{DRAFT} \longleftrightarrow \text{SUBMITTED} \longrightarrow \text{APPROVED} \mid \text{REJECTED}$$
+  $$\text{SUBMITTED} \longleftrightarrow \text{RETURNED}$$
+  $$\text{SUBMITTED} \longrightarrow \text{PENDING\_SECOND\_APPROVAL} \longrightarrow \text{APPROVED} \mid \text{REJECTED}$$
+  A reviewer may return a `SUBMITTED` request for revision instead of deciding it (`FR-06`, `BR-07`), and its
+  requester may then edit and resubmit it (`BR-08`). `RETURNED` is not a terminal state, is reachable only from
+  `SUBMITTED`, and leads only back to `SUBMITTED`.
+  A first approval of a request above the `BR-09` threshold moves it to `PENDING_SECOND_APPROVAL` rather than to
+  `APPROVED` (`FR-07`). That state is reachable only from `SUBMITTED`, is not terminal, and leads only to
+  `APPROVED` or `REJECTED` through a second reviewer. It cannot be returned for revision, because the first
+  approval it already carries would be invalidated.
   Requests in terminal states (`APPROVED` or `REJECTED`) are immutable. Any transition attempt on a terminal request must be rejected with **HTTP 400 Bad Request** (`INVALID_TRANSITION`).
 - **`BR-03 (Immutability After Submission)`**:  
-  Once a request transitions to `SUBMITTED`, the requester cannot modify, add, or remove line items or request header fields. Modification attempts must be rejected with **HTTP 400 Bad Request** (`IMMUTABLE_AFTER_SUBMIT`).
+  Once a request transitions to `SUBMITTED`, the requester cannot modify, add, or remove line items or request header fields. Modification attempts must be rejected with **HTTP 400 Bad Request** (`IMMUTABLE_AFTER_SUBMIT`). This holds for `SUBMITTED`, `APPROVED` and `REJECTED`.
+  It does not hold for `RETURNED`. A request a reviewer has returned is editable by its original requester under `BR-08`, which is the single exception this rule admits and the narrowing `FR-06` introduces. The claim becomes immutable again as soon as it is resubmitted.
 - **`BR-04 (Authoritative Amount Calculation & Line Item Validation)`**:  
   - The request `totalAmount` must be calculated on the server by summing `ExpenseItem.amount`. Client-submitted totals are ignored.
   - Every line item amount must be strictly greater than zero ($amount > 0$).
@@ -117,7 +127,7 @@ All business rules are enforced exclusively at the **Application / Server Layer 
 - **`BR-08 (Resubmission Authorization)`**:  
   Only the original requester can edit and resubmit a request in `RETURNED` status. Resubmission transitions the status back to `SUBMITTED` and appends an entry to `ApprovalHistory`.
 - **`BR-09 (High-Value Approval Threshold Rule)`**:  
-  If a request's `totalAmount` $\ge$ threshold (e.g. 10,000.00 THB), initial approval moves status to `STAGE1_APPROVED`. The request requires a distinct secondary reviewer action before reaching `APPROVED`.
+  If a request's `totalAmount` > 50,000.00 THB, initial approval moves status to `PENDING_SECOND_APPROVAL`. The request requires a distinct secondary reviewer action before reaching `APPROVED`. Neither reviewer may be the requester, and Reviewer 2 cannot be Reviewer 1 (dual control requirement).
 
 ### Sprint 3 Rules
 - **`BR-10 (Report Export Authorization)`**:  
