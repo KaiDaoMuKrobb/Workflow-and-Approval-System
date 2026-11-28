@@ -64,7 +64,7 @@ A **system responsibility** is behavior that applies universally across screens 
 | `SR-02` | **Error envelope:** Shared `{ success: false, error: { message, code } }` schema | `F-01` | All negative criteria assert code and status | 1, 2, 3 | `verified` |
 | `SR-03` | **Append-only audit history:** Every state transition writes an `ApprovalHistory` row | `F-02`, `F-04`, `F-05` | `TEST-30b`, `TEST-50`, `TEST-55` | 1, 2 | `verified` |
 | `SR-04` | **Monetary precision:** Amounts stored as `Decimal(12,2)` and transferred as formatted strings | `F-01`, `F-02` | `TEST-12`, `TEST-20b`, `TEST-84`, `TEST-85` | 1, 2, 3 | `verified` |
-| `SR-05` | **Server-side enforcement:** All security guards enforced in route handlers | `F-04`, `F-07`, `F-08` | Isolated API-level test cases without browser dependency | 1, 2, 3 | `verified` |
+| `SR-05` | **Server-side enforcement & Audit trail immutability:** All security guards and terminal audit trail immutability enforced in route handlers | `Core`, `F-04`, `F-05`, `F-06`, `F-08` | Isolated API-level test cases without browser dependency; append-only audit trail verified by `TEST-57` and `TEST-68` | 1, 2, 3 | `verified` |
 
 ---
 

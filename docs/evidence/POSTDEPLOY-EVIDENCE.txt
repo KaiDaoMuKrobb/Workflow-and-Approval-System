@@ -1,0 +1,40 @@
+Post deployment evidence, ExpenseFlow
+Target        https://expenseflow-231151010524.asia-southeast1.run.app
+Run at        2026-11-27T22:03:29.323Z
+Fixture tag   D2CHK-202611272203
+
+Service health  HTTP 200  {"status":"ok","service":"expenseflow"}
+
+Signed in as alice.req, bob.req, carol.rev and david.both. Four HttpOnly session cookies issued.
+
+E5  Claims already stored for alice.req before this run: 12
+    These predate the v0.3.0 deployment and survived the F-06 migration.
+
+Fixture  EXP-2026-0019  total 2000.50  status DRAFT
+PASS  CT-02    expected 2000.50                      actual 2000.50   server calculated the total, BR-04
+
+PASS  E1       expected 400 SELF_ASSIGNMENT          actual 400 SELF_ASSIGNMENT   DEC-02 v2.0 at submit
+PASS  CT-03    expected 200 null                     actual 200 null   DRAFT to SUBMITTED
+PASS  E3       expected 403 SELF_APPROVAL            actual 403 SELF_APPROVAL   BR-01 at the endpoint
+PASS  E4       expected 404 NOT_FOUND                actual 404 NOT_FOUND   another requester is not told the claim exists
+PASS  BR-05    expected 403 FORBIDDEN                actual 403 FORBIDDEN   a reviewer who is not the assignee
+PASS  CT-06    expected 400 VALIDATION_ERROR         actual 400 VALIDATION_ERROR   FR-05, a decision needs a reason
+PASS  CT-08    expected 400 IMMUTABLE_AFTER_SUBMIT   actual 400 IMMUTABLE_AFTER_SUBMIT   BR-03 still holds
+PASS  BR-07    expected 400 VALIDATION_ERROR         actual 400 VALIDATION_ERROR   a return reason under ten characters
+PASS  F-05     expected 200 RETURNED                 actual 200 RETURNED   returned for revision on the deployed candidate
+PASS  BR-08    expected 200 SUBMITTED                actual 200 SUBMITTED   the requester resubmits
+PASS  BR-09    expected 200 APPROVED                 actual 200 APPROVED   2,000.50 is at or below 50,000.00, one stage
+PASS  AC-66    expected 400 VALIDATION_ERROR         actual 400 VALIDATION_ERROR   a high value approval must name a second reviewer
+PASS  AC-61    expected 200 PENDING_SECOND_APPROVAL  actual 200 PENDING_SECOND_APPROVAL   50,000.01 takes the two stage path
+PASS  AC-63    expected 403 FORBIDDEN                actual 403 FORBIDDEN   dual control, the first reviewer cannot approve twice
+PASS  AC-62    expected 200 APPROVED                 actual 200 APPROVED   the named second reviewer completes it
+
+Audit trail for EXP-2026-0020, read back from Cloud SQL:
+   SUBMIT           DRAFT to SUBMITTED
+   APPROVE_STAGE_1  SUBMITTED to PENDING_SECOND_APPROVAL
+   APPROVE_STAGE_2  PENDING_SECOND_APPROVAL to APPROVED
+
+E5  Claims stored for alice.req after this run: 14
+    Fixtures created by this run are tagged D2CHK-202611272203.
+
+End of post deployment evidence.

@@ -115,8 +115,7 @@ Every other guard on this route is untouched, including the `DEC-02 v2.0` self-a
 
 ### 3.4 UI Layer
 
-The string union `'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'` is written out by hand in **five
-files** and omits `RETURNED`. Widening it is a compile-time prerequisite, not a cosmetic change: in
+The string union `'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'` is written out by hand in **five files** and omits `RETURNED`. Widening it is a compile-time prerequisite, not a cosmetic change: in
 `src/app/requests/[id]/page.tsx` the union keys a `Record<RequestDetail['status'], string>`, so the
 compiler will demand the new entry once the union grows.
 
@@ -152,8 +151,7 @@ section and row names below stay correct regardless.
 `F-05` narrows two rules that Sprint 1 wrote as absolutes, so several existing statements stop being
 true. Each is revised with the reason recorded in that document's revision history, and ownership
 decides who makes the edit. `docs/srs.md` and `docs/traceability.md` are shared between the two
-authors: each edits only the rows of their own feature, and those edits are committed **separately
-from the code**, not folded into an implementation commit. A change that falls inside the other
+authors: each edits only the rows of their own feature, and those edits are committed **separately from the code**, not folded into an implementation commit. A change that falls inside the other
 author's feature or file is requested from its owner, or made only with that owner's permission
 recorded in the Pull Request description.
 
@@ -164,10 +162,10 @@ Definition of Done, found while verifying this contract against the source.
 
 | # | Document and location | Current statement | Required revision | Owner |
 | :--- | :--- | :--- | :--- | :--- |
-| 1 | `docs/srs.md` `BR-02`, line 99 | State machine written as `DRAFT ⟷ SUBMITTED → APPROVED \| REJECTED` | Add `RETURNED`. **This already contradicts `docs/srs.md` line 41 in the same file, which does include `RETURNED`.** `F-05` resolves the contradiction | siripitch-c, who owns `review/route.ts` where `BR-02` is enforced; committed separately from the code |
+| 1 | `docs/srs.md` `BR-02`, line 99 | State machine written as `DRAFT <-> SUBMITTED -> APPROVED or REJECTED` | Add `RETURNED`. **This already contradicts `docs/srs.md` line 41 in the same file, which does include `RETURNED`.** `F-05` resolves the contradiction | siripitch-c, who owns `review/route.ts` where `BR-02` is enforced; committed separately from the code |
 | 2 | `docs/srs.md` `BR-03`, lines 101–102 | *"Once a request transitions to `SUBMITTED`, the requester cannot modify, add, or remove line items"* | Taken literally this also forbids editing a claim that has since been returned. Add an explicit carve-out for `RETURNED` under `BR-08` | siripitch-c, who owns `[id]/route.ts` and `submit/route.ts` where `BR-03` is enforced; committed separately from the code |
 | 3 | `docs/sprints/sprint-1/F-02-request-crud.md` section 1.1 line 23 **and** section 2.1 line 112 | Guard order for `PUT` given as *"400 `IMMUTABLE_AFTER_SUBMIT` (if `status !== DRAFT` per `BR-03`)"*, and the route specification repeats *"(if `status !== 'DRAFT'`)"* | Both become `status !== DRAFT && status !== RETURNED`. Line 140 (`submit`) reads *"if status already `SUBMITTED`, `APPROVED`, or `REJECTED`"*, which does not list `RETURNED` and therefore stays true as written | request from KaiDaoMuKrobb |
-| 4 | `docs/system-sds.md` section 2.1 ERD, line 103 | `string action "SUBMIT \| APPROVE \| REJECT"` | Add `RETURN` and `RESUBMIT` | request from KaiDaoMuKrobb |
+| 4 | `docs/system-sds.md` section 2.1 ERD, line 103 | `string action "SUBMIT / APPROVE / REJECT"` | Add `RETURN` and `RESUBMIT` | request from KaiDaoMuKrobb |
 | 5 | `docs/system-sds.md` section 4.2 guard hierarchy, line 212 | `──(Edit submitted request)────> 400 IMMUTABLE_AFTER_SUBMIT` | Note that a `RETURNED` claim is editable by its requester | request from KaiDaoMuKrobb |
 | 6 | `docs/system-sds.md` section 4.4 role matrix | `PUT` and `submit` rows read *"✅ (`DRAFT` only)"* for the owning requester | Becomes *"✅ (`DRAFT` or `RETURNED`)"* | request from KaiDaoMuKrobb |
 | 7 | `docs/system-sds.md` section 4.3 error vocabulary | `VALIDATION_ERROR` linked only to `BR-04` | Add `BR-07`, since a short return reason now raises it | request from KaiDaoMuKrobb |

@@ -24,7 +24,7 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 | `in-progress` | Implementation or code review currently active on a dedicated feature branch. |
 | `planned` | Allocated to a sprint; criteria and schema will be elaborated as that increment starts. |
 
-> **Note on Test Counts:** On `origin/staging`, the regression test suite stands at **112/112 passing tests across 15 test files**. `F-05` contributed 11 of those and `F-06` a further 14, each added as its own suite. The 87/87 across 13 files quoted before `F-05` merged was the Sprint 1 and `F-08` baseline both were measured against.
+> **Note on Test Counts:** On `main` (Release `v0.3.0`, commit `e75a306`), the regression test suite stands at **112/112 passing tests across 15 test files**. `F-05` contributed 11 of those and `F-06` a further 14, each added as its own suite. The 87/87 across 13 files quoted before `F-05` merged was the Sprint 1 and `F-08` baseline both were measured against.
 
 ---
 
@@ -34,10 +34,10 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 
 | Requirement | Feature | Sprint | Acceptance Criteria | Tests | Status |
 | :--- | :--- | :---: | :--- | :--- | :--- |
-| `FR-01` Sign in and sign out | `F-01` | 1 | `AC-01` .. `AC-04` | `TEST-01` .. `TEST-04` | `verified` (81/81 baseline, PR #6) |
-| `FR-02` Create request with line items | `F-02` | 1 | `AC-10` .. `AC-13` | `TEST-10` .. `TEST-19` | `verified` (81/81 baseline, PR #8) |
+| `FR-01` Sign in and sign out | `F-01` | 1 | `AC-01` .. `AC-04` | `TEST-01` .. `TEST-04` | `verified` (112/112 suite, PR #6) |
+| `FR-02` Create request with line items | `F-02` | 1 | `AC-10` .. `AC-13` | `TEST-10` .. `TEST-19` | `verified` (112/112 suite, PR #8) |
 | `FR-03` Submit to named reviewer | `F-02` | 1 | `AC-16` .. `AC-18`, `AC-18b` .. `AC-18e` | `TEST-16` .. `TEST-19`, `TEST-18d` | `verified` (400 `SELF_ASSIGNMENT` under `DEC-02 v2.0`, PR #42, #44) |
-| `FR-04` Reviewer sees assigned requests | `F-03` | 1 | `AC-20` .. `AC-24`, `AC-28` .. `AC-28g` | `TEST-20` .. `TEST-24`, `TEST-28` .. `TEST-28g` | `verified` (81/81 baseline, PR #11) |
+| `FR-04` Reviewer sees assigned requests | `F-03` | 1 | `AC-20` .. `AC-24`, `AC-28` .. `AC-28g` | `TEST-20` .. `TEST-24`, `TEST-28` .. `TEST-28g` | `verified` (112/112 suite, PR #11) |
 | `FR-05` Approve or reject with reason | `F-04` | 1 | `AC-30`, `AC-36` | `TEST-30` .. `TEST-30c`, `TEST-36`, `TEST-E2E-02` | `verified` (Reason mandatory for both outcomes, PR #14) |
 | `FR-06` Return and resubmission workflow | `F-05` | 2 | `AC-50` .. `AC-59` | `TEST-50` .. `TEST-59` | `verified` (11 tests pass in `tests/api/request-return-resubmit.test.ts`, with `AC-58` carried by the existing `TEST-15`; contract `docs/sprints/sprint-2/F-05-return-resubmit.md`, Issue #45, merged in PR #54) |
 | `FR-07` Second stage approval for high amounts | `F-06` | 2 | `AC-60` .. `AC-69` | `TEST-60` .. `TEST-69`, plus `TEST-60b`, `TEST-62b`, `TEST-66b`, `TEST-67b` | `verified` (14 tests pass in `tests/api/requests-second-approval.test.ts`; `TEST-69b` is the manual interface check the contract specifies; threshold strictly `> 50,000.00 THB` under `DEC-08`) |
@@ -65,16 +65,16 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 
 | Requirement | Scope | Sprint | Acceptance Criteria | Verification Method | Status |
 | :--- | :--- | :---: | :--- | :--- | :--- |
-| `NFR-01` Passwords hashed with bcrypt | `F-01` | 1 | `AC-01` .. `AC-04` | Automated test asserts `$2a$` or `$2b$` prefix | `verified` (81/81 baseline) |
-| `NFR-02` Unauthenticated access refused | `SR-01` | 1 | `AC-23`, `AC-37`, `AC-80` | Automated tests verify 401 on protected routes | `verified` (81/81 baseline) |
-| `NFR-03` List endpoints respond under 500ms | `F-03`, `F-07` | 1, 2 | `AC-29`, `AC-76b` | Vitest timer assertions against seeded DB | `verified` (81/81 baseline) |
+| `NFR-01` Passwords hashed with bcrypt | `F-01` | 1 | `AC-01` .. `AC-04` | Automated test asserts `$2a$` or `$2b$` prefix | `verified` (112/112 suite) |
+| `NFR-02` Unauthenticated access refused | `SR-01` | 1 | `AC-23`, `AC-37`, `AC-80` | Automated tests verify 401 on protected routes | `verified` (112/112 suite) |
+| `NFR-03` List endpoints respond under 500ms | `F-03`, `F-07` | 1, 2 | `AC-29`, `AC-76b` | Vitest timer assertions against seeded DB | `verified` (112/112 suite) |
 | `NFR-04` Responsive layout (mobile/tablet/desktop) | `F-10` | 3 | `AC-104` | Tailwind viewport checks (375px, 768px, 1280px) | `specified` |
-| `NFR-05` Sub-second aggregated analytics | `F-08` | 3 | `AC-86` | Vitest API execution time measured at 227ms | `verified` (PR #46) |
+| `NFR-05` Sub-second aggregated analytics | `F-08` | 3 | `AC-86` | Vitest API execution time measured at 225ms | `verified` (PR #46) |
 | `SR-01` Auth check order (401 -> 404 -> 403 -> 400) | Core | 1 | `AC-38` | Proven by `TEST-38`, `TEST-33b`, `TEST-34b` | `verified` (Universal guard ordering) |
 | `SR-02` Standard error envelope | Core | 1 | All negative AC | `{ success: false, error: { message, code } }` | `verified` (Universal error schema) |
 | `SR-03` Append-only audit history | Core | 1 | `AC-30`, `AC-36` | `ApprovalHistory` rows created, never deleted | `verified` (Audit trail integrity) |
 | `SR-04` Monetary precision (`Decimal(12,2)`) | Core | 1, 3 | `TEST-12`, `TEST-20b`, `TEST-84`, `TEST-85` | Prisma Decimal mapping; no float arithmetic in route handlers; strings end-to-end on wire | `verified` (PR #8, PR #11, PR #46 commit `484a4b3`) |
-| `SR-05` Immutability of terminal audit trail | Core | 2 | `AC-30`, `AC-36`, `AC-57`, `AC-68` | `TEST-57`, `TEST-68` | Every transition appends a row and none is ever rewritten, across both the `F-05` and `F-06` paths | `verified` |
+| `SR-05` Immutability of terminal audit trail | Core | 2 | `AC-30`, `AC-36`, `AC-57`, `AC-68` | `TEST-57`, `TEST-68` (append-only across F-05 and F-06 paths) | `verified` |
 
 ---
 

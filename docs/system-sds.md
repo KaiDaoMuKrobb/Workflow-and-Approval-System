@@ -1,6 +1,6 @@
 # System-Level Software Design Specification (System-Level SDS)
 **Project:** Corporate Expense Reimbursement System (ExpenseFlow)  
-**Deliverable:** CPE 334 Project Deliverable 1 (Part C: 15 Points)  
+**Document Baseline:** Current system baseline maintained continuously from Deliverable 1 for Deliverable 2 submission  
 **Theme:** Theme 5: Workflow and Approval System  
 **Document Status:** Approved Baseline (Sprint 1)  
 **Author / Maintainer:** KaiDaoMuKrobb  
