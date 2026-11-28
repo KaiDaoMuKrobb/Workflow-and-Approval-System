@@ -1,6 +1,6 @@
 # Software Requirements Specification (SRS)
 **Project:** Corporate Expense Reimbursement System (ExpenseFlow)  
-**Deliverable:** CPE 334 Project Deliverable 1 (Part A: 10 Points)  
+**Document Baseline:** Current system baseline maintained continuously from Deliverable 1 for Deliverable 2 submission  
 **Theme:** Theme 5: Workflow and Approval System  
 **Document Status:** Approved Baseline (Sprints 1–3)  
 **Author / Maintainer:** KaiDaoMuKrobb  
