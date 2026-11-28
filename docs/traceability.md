@@ -34,10 +34,10 @@ Traceability runs bidirectionally to ensure full alignment between product scope
 
 | Requirement | Feature | Sprint | Acceptance Criteria | Tests | Status |
 | :--- | :--- | :---: | :--- | :--- | :--- |
-| `FR-01` Sign in and sign out | `F-01` | 1 | `AC-01` .. `AC-04` | `TEST-01` .. `TEST-04` | `verified` (81/81 baseline, PR #6) |
-| `FR-02` Create request with line items | `F-02` | 1 | `AC-10` .. `AC-13` | `TEST-10` .. `TEST-19` | `verified` (81/81 baseline, PR #8) |
+| `FR-01` Sign in and sign out | `F-01` | 1 | `AC-01` .. `AC-04` | `TEST-01` .. `TEST-04` | `verified` (112/112 suite, PR #6) |
+| `FR-02` Create request with line items | `F-02` | 1 | `AC-10` .. `AC-13` | `TEST-10` .. `TEST-19` | `verified` (112/112 suite, PR #8) |
 | `FR-03` Submit to named reviewer | `F-02` | 1 | `AC-16` .. `AC-18`, `AC-18b` .. `AC-18e` | `TEST-16` .. `TEST-19`, `TEST-18d` | `verified` (400 `SELF_ASSIGNMENT` under `DEC-02 v2.0`, PR #42, #44) |
-| `FR-04` Reviewer sees assigned requests | `F-03` | 1 | `AC-20` .. `AC-24`, `AC-28` .. `AC-28g` | `TEST-20` .. `TEST-24`, `TEST-28` .. `TEST-28g` | `verified` (81/81 baseline, PR #11) |
+| `FR-04` Reviewer sees assigned requests | `F-03` | 1 | `AC-20` .. `AC-24`, `AC-28` .. `AC-28g` | `TEST-20` .. `TEST-24`, `TEST-28` .. `TEST-28g` | `verified` (112/112 suite, PR #11) |
 | `FR-05` Approve or reject with reason | `F-04` | 1 | `AC-30`, `AC-36` | `TEST-30` .. `TEST-30c`, `TEST-36`, `TEST-E2E-02` | `verified` (Reason mandatory for both outcomes, PR #14) |
 | `FR-06` Return and resubmission workflow | `F-05` | 2 | `AC-50` .. `AC-59` | `TEST-50` .. `TEST-59` | `verified` (11 tests pass in `tests/api/request-return-resubmit.test.ts`, with `AC-58` carried by the existing `TEST-15`; contract `docs/sprints/sprint-2/F-05-return-resubmit.md`, Issue #45, merged in PR #54) |
 | `FR-07` Second stage approval for high amounts | `F-06` | 2 | `AC-60` .. `AC-69` | `TEST-60` .. `TEST-69`, plus `TEST-60b`, `TEST-62b`, `TEST-66b`, `TEST-67b` | `verified` (14 tests pass in `tests/api/requests-second-approval.test.ts`; `TEST-69b` is the manual interface check the contract specifies; threshold strictly `> 50,000.00 THB` under `DEC-08`) |

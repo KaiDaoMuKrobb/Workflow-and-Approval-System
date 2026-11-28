@@ -115,8 +115,7 @@ Every other guard on this route is untouched, including the `DEC-02 v2.0` self-a
 
 ### 3.4 UI Layer
 
-The string union `'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'` is written out by hand in **five
-files** and omits `RETURNED`. Widening it is a compile-time prerequisite, not a cosmetic change: in
+The string union `'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED'` is written out by hand in **five files** and omits `RETURNED`. Widening it is a compile-time prerequisite, not a cosmetic change: in
 `src/app/requests/[id]/page.tsx` the union keys a `Record<RequestDetail['status'], string>`, so the
 compiler will demand the new entry once the union grows.
 
@@ -152,8 +151,7 @@ section and row names below stay correct regardless.
 `F-05` narrows two rules that Sprint 1 wrote as absolutes, so several existing statements stop being
 true. Each is revised with the reason recorded in that document's revision history, and ownership
 decides who makes the edit. `docs/srs.md` and `docs/traceability.md` are shared between the two
-authors: each edits only the rows of their own feature, and those edits are committed **separately
-from the code**, not folded into an implementation commit. A change that falls inside the other
+authors: each edits only the rows of their own feature, and those edits are committed **separately from the code**, not folded into an implementation commit. A change that falls inside the other
 author's feature or file is requested from its owner, or made only with that owner's permission
 recorded in the Pull Request description.
 

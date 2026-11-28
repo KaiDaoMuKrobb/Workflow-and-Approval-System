@@ -38,7 +38,7 @@ In corporate environments, employees routinely incur out-of-pocket expenses for 
 1. **Request Lifecycle Management (Sprints 1–2):** Creation, line-item itemization, submission, return/revision, and state tracking.
 2. **Reviewer Assignment & Multi-Stage Governance (Sprints 1–2):** Direct reviewer designation in Sprint 1, expanding to tiered two-stage approval for high-value claims in Sprint 2.
 3. **Workflow State Machine:** Rigorous state governance:
-   $$\text{DRAFT} \longleftrightarrow \text{SUBMITTED} \longleftrightarrow \text{RETURNED} \longrightarrow \text{APPROVED} \mid \text{REJECTED}$$
+   `DRAFT <-> SUBMITTED <-> RETURNED -> APPROVED | REJECTED`
 4. **Audit & Decision History (Sprints 1–3):** Immutable recording of every state transition, actor ID, and review comment in `ApprovalHistory`.
 5. **Search, Analytics & Reporting (Sprints 2–3):** Multi-criteria filtering, department spending analytics, and financial report export.
 6. **Security & Server-side Authorization:** Cookie-based session identity, `bcryptjs` password hashing, and server-side authorization boundaries.
@@ -96,9 +96,9 @@ All business rules are enforced exclusively at the **Application / Server Layer 
   A reviewer is **strictly forbidden from approving or rejecting their own expense request**. If `request.requesterId == currentUserId`, the server must reject the operation with **HTTP 403 Forbidden** and error code `SELF_APPROVAL` (`DEC-02`). Since `DEC-02` v2.0 the submit endpoint also refuses self-assignment with HTTP 400, so this guard is the second of two layers; it is retained unchanged.
 - **`BR-02 (State Transition Validation)`**:  
   Status changes must strictly follow the defined state machine:
-  $$\text{DRAFT} \longleftrightarrow \text{SUBMITTED} \longrightarrow \text{APPROVED} \mid \text{REJECTED}$$
-  $$\text{SUBMITTED} \longleftrightarrow \text{RETURNED}$$
-  $$\text{SUBMITTED} \longrightarrow \text{PENDING\_SECOND\_APPROVAL} \longrightarrow \text{APPROVED} \mid \text{REJECTED}$$
+  - Single-stage lifecycle: `DRAFT <-> SUBMITTED -> APPROVED | REJECTED`  
+  - Return for revision: `SUBMITTED <-> RETURNED`  
+  - Dual-control lifecycle (> 50,000.00 THB): `SUBMITTED -> PENDING_SECOND_APPROVAL -> APPROVED | REJECTED`  
   A reviewer may return a `SUBMITTED` request for revision instead of deciding it (`FR-06`, `BR-07`), and its
   requester may then edit and resubmit it (`BR-08`). `RETURNED` is not a terminal state, is reachable only from
   `SUBMITTED`, and leads only back to `SUBMITTED`.
@@ -141,7 +141,7 @@ All business rules are enforced exclusively at the **Application / Server Layer 
 | :--- | :--- | :--- | :--- | :---: |
 | **`NFR-01`** | **Password Security** | All stored passwords must be hashed using `bcryptjs` with salt rounds $\ge 10$. Plaintext passwords must never appear in database records, HTTP responses, or server logs. | **Automated Unit / DB Test:** Query raw user record from database and assert the hash prefix is `$2a$` or `$2b$` and strictly not equal to the plaintext input. | Sprint 1 |
 | **`NFR-02`** | **Authentication Barrier & Data Isolation** | All protected endpoints accessed without an active session cookie must return **HTTP 401 Unauthorized** with zero private entity data returned. | **Automated API Integration Test:** Execute requests to all protected routes without cookies and assert HTTP status 401 and empty payload. | Sprint 1 |
-| **`NFR-03`** | **API Response Latency** | Request retrieval endpoints (`GET /api/requests` and `GET /api/requests/:id`) must respond within **500 ms** under seeded data. Database indexes on foreign keys ensure scalability. | **Automated Performance Test:** Measure response time of query endpoints in test runner following one warm-up cycle; assert duration $< 500\text{ ms}$. | Sprint 1 |
+| **`NFR-03`** | **API Response Latency** | Request retrieval endpoints (`GET /api/requests` and `GET /api/requests/:id`) must respond within **500 ms** under seeded data. Database indexes on foreign keys ensure scalability. | **Automated Performance Test:** Measure response time of query endpoints in test runner following one warm-up cycle; assert duration < 500 ms. | Sprint 1 |
 
 ---
 
